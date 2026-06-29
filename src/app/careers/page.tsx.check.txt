@@ -1,0 +1,44 @@
+Careers page polish audit
+
+Page structure:
+- 1 h1 (PageHero line 81) ✓
+- Multiple h2 (SplitReveal as h2 throughout)
+- Multiple h3 (role titles, ladder roles, etc.)
+
+Contrast analysis:
+- --ink (#fafbfc) on --bg (#0b1a2b) = very high ✓
+- --muted (#c9d2d6) on --bg (#0b1a2b) = ~7.8:1 ✓
+- --subtle (#8a98a2) on --bg (#0b1a2b) = ~5.2:1 ✓
+- --subtle (#8a98a2) on --bg-elev (#0f2236) = ~4.9:1 ✓
+- --gold-mid (#e8c98a) on --bg (#0b1a2b) = ~4.1:1 (may fail 4.5:1 WCAG AA)
+- --gold-hi (#f3e2be) on --bg (#0b1a2b) = ~10.5:1 ✓
+- --gold-mid (#e8c98a) on --bg-elev (#0f2236) = ~3.8:1 (fails 4.5:1 WCAG AA)
+
+Focus/Hover states to check:
+1. FAQ button (Faq.tsx line 24) - no focus-visible class
+2. Instagram link (page.tsx line 177) - no focus-visible class  
+3. Role links (page.tsx line 207) - no focus-visible class
+4. Apply button in CTA (page.tsx line 252) - Button component should have focus-visible
+
+Spacing/Rhythm check:
+- Section padding: py-20 sm:py-28 lg:py-36 (80px / 112px / 144px) - 16px multiples ✓
+- Container gaps: gap-6, gap-3, gap-12, gap-16 (24px, 12px, 48px, 64px) - 4px multiples ✓
+- Internal spacing appears consistent
+
+Images/Alt text:
+- PageHero image (page.tsx line 67): alt="" - appropriate (decorative) ✓
+- DayInLife labels: provided in 'label' prop
+- Values section Teamwork image (page.tsx line 112): alt="The Atlantic Connect Marketing team together." ✓
+- Non-Teamwork value images: alt="" (placeholders) - appropriate
+
+Touch targets:
+- FAQ button: py-6 (24px height) + h-5 w-5 icon = ~32px, good for mobile ✓
+- Links 44px target recommended, checking...
+  - Role link buttons: py-6 sm:flex = 24px on mobile (line 209) - potentially too small
+  - Instagram link: inline, no explicit height
+  - CTA button: size="lg" h-[3.25rem] (52px) ✓
+
+Icon accessibility:
+- Quote icon (page.tsx line 166) - decorative, in a heading context
+- Plus icon in FAQ (Faq.tsx line 27) - decorative toggle, aria-expanded on button ✓
+- ArrowUpRight icons - multiple locations, no aria-label but in link/button context

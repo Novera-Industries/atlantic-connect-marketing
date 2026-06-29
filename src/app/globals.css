@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   Atlantic Connect Marketing - design tokens
+   "The Current": deep Atlantic navy lit by ocean blue + liquid chrome.
+   Two temperatures, one world (cool = client, warm = talent).
+   ========================================================================= */
+:root {
+  /* Ground & surface */
+  --bg: #0b1a2b; /* Deep Navy - page ground */
+  --bg-elev: #0f2236; /* Navy Raise - elevated sections */
+  --bg-deep: #06111e; /* Abyss - hero void / footers */
+  --line: rgba(201, 210, 214, 0.12); /* hairline - 1px only */
+
+  /* Brand light */
+  --brand: #1b75bc; /* Ocean Blue - primary action, the wave */
+  --brand-bright: #2e97e6; /* Electric Azure - highlights, talent energy */
+  --brand-deep: #0e4c82; /* Depth Blue - pressed/active */
+
+  /* Text (on dark) */
+  --ink: #fafbfc; /* primary - AAA on --bg */
+  --muted: #c9d2d6; /* secondary - >=7:1 on --bg */
+  --subtle: #8a98a2; /* tertiary/labels - >=4.5:1, never < 14px */
+
+  /* Metals - decoration / large-display only, never body text */
+  --chrome-hi: #f2f4f6;
+  --chrome-mid: #aeb7bf;
+  --chrome-lo: #4a5158;
+  --gold-hi: #f3e2be;
+  --gold-mid: #e8c98a;
+  --gold-lo: #7a5e2e;
+
+  /* Motion tokens */
+  --ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --header-h: 72px;
+  color-scheme: dark;
+}
+
+/* =========================================================================
+   Base
+   ========================================================================= */
+* {
+  border-color: var(--line);
+}
+
+html {
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: auto; /* Lenis drives smooth scroll, not the browser */
+  /* fallback so deep-link anchors land below the fixed header */
+  scroll-padding-top: var(--header-h);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+  overflow-x: clip;
+  font-feature-settings: "ss01", "cv01";
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* Headings use Switzer (neutral grotesque) for a cleaner, modern dark-tech voice.
+   Hierarchy is carried by weight + size + tight tracking, not a display face. */
+h1, h2, h3, h4 {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+/* Reduce orphans/widows in running prose. */
+p {
+  text-wrap: pretty;
+}
+
+/* Keyboard focus - visible, on-brand, never removed */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand-bright);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Tabular numerals for count-up stats */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* =========================================================================
+   Lenis smooth scroll
+   ========================================================================= */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* =========================================================================
+   Custom utilities
+   ========================================================================= */
+@layer utilities {
+  /* Silver liquid-chrome text - large display only. Dark stops floored at
+     #9aa4ac so the metallic sheen never drops below ~5:1 on the navy ground. */
+  .text-chrome {
+    background: linear-gradient(
+      100deg,
+      #f2f4f6 0%,
+      #ffffff 15%,
+      #c2cad0 38%,
+      #eef1f3 58%,
+      #9aa4ac 84%,
+      #cdd4d9 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  /* Warm champagne/gold chrome - large display only. Dark stop floored at
+     #cda860 (drops the near-black #7A5E2E that failed contrast on navy). */
+  .text-gold {
+    background: linear-gradient(
+      100deg,
+      #f3e2be 0%,
+      #fff6e2 15%,
+      #e8c98a 40%,
+      #f3e2be 60%,
+      #cda860 84%,
+      #ecd39a 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-ocean {
+    background: linear-gradient(100deg, var(--brand-bright), var(--brand));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  /* Surface fills */
+  .bg-chrome {
+    background: linear-gradient(135deg, var(--chrome-hi), var(--chrome-mid) 55%, var(--chrome-lo));
+  }
+  .bg-gold {
+    background: linear-gradient(135deg, var(--gold-hi), var(--gold-mid) 55%, var(--gold-lo));
+  }
+  /* Faint grain/vignette helper for cinematic depth */
+  .vignette {
+    background:
+      radial-gradient(120% 90% at 50% 0%, transparent 55%, rgba(6, 17, 30, 0.55) 100%);
+  }
+  /* Static hero plate carries mobile + reduced motion (no WebGL there). On a
+     WebGL-capable desktop it's hidden so the opaque WebGL current is the hero
+     graphic over a clean dark base - never a wave poster behind it. */
+  .hero-static {
+    opacity: 1;
+  }
+  @media (min-width: 768px) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .hero-static {
+      opacity: 0;
+    }
+  }
+  /* The reveal clip-mask line container */
+  .reveal-line {
+    overflow: hidden;
+    display: block;
+  }
+  .hairline-t {
+    border-top: 1px solid var(--line);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--line);
+  }
+  /* Disable the native cursor where the custom cursor is active */
+  .cursor-none-fine {
+  }
+  @media (pointer: fine) {
+    .cursor-active,
+    .cursor-active * {
+      cursor: none;
+    }
+  }
+}
+
+/* =========================================================================
+   Reduced motion - a DESIGNED state, never a broken one.
+   GSAP/Motion handle JS animations; this covers CSS + safety net.
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .text-chrome,
+  .text-gold {
+    background-size: 100% auto;
+  }
+}

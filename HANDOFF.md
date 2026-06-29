@@ -1,0 +1,324 @@
+# Handoff — Atlantic Connect Marketing site
+
+Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
+Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
+Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
+
+## What's done
+
+A full motion-rich Next.js 15 marketing site for Atlantic Connect Marketing
+(Halifax field-marketing firm). Brand = "The Current" (ocean wave). Pages:
+Home, Partner, Careers, About, Privacy + sitemap/robots/JSON-LD. Real assets
+wired (logo, team photo, headshots — AI-upscaled), self-hosted fonts (Clash
+Display + Switzer), Lenis→GSAP scroll, Motion reveals. Em dashes removed.
+Other pages (Partner/Careers/About) are DONE and good — do not touch.
+
+## Active work: home = one continuous particle "Current" (textura.agency style)
+
+Approved plan: `/Users/officemac/.claude/plans/tranquil-doodling-peach.md` (read it).
+Reference video: `/Users/officemac/Downloads/a87660b18f8642108ff7524febdc1fff.MP4`.
+NOTE what it actually is: a phone screen-recording of **textura.eu** (the "HELIOS"
+project, IG @textura.eu) with the meme overlay "Them: it won't work on mobile /
+Me with Claude". So the brief is two-fold: (1) match the textura look — dense
+morphing particle **nebula/clouds** over near-black with clean white type, and
+(2) **it must sing on mobile** — that's the whole point of the clip. User
+decisions: **particles take over the hero** (blue shader hero retired) and
+**full textura-tier** (~20k particles desktop / 9k mobile, lead-into every block).
+
+Journey is now driven by an ANCHOR-DERIVED STAGE (0..4), NOT guessed scroll-%
+thresholds — so each formation is active exactly when its section is centred in
+the viewport (computeStage() in GlobalCurrent reads live section rects → stage;
+the shader blends formations P0..P4 by stage). Stages:
+0 WAVE (hero) → 1 split into Partner/Careers cards → 2 HALO around the centred
+Client photo → 3 warm halo on the Talent card → 4 SETTLE (one calm wave above the
+Trust CTA — the current full circle). Colour: merged → cool/warm → cool → warm →
+chrome. Dev hook is now `window.__forceStage = <0..4>` (was __forceProgress).
+
+### Design direction locked by user (2026-06-29, iteration 2)
+
+Premium feel = **dark-tech minimal** (textura/Linear: restraint, negative space,
+fine hairlines, particles do the drama). Headlines = **cleaner neutral grotesque
+(Switzer)** — Clash Display retired from the UI (the `font-display` token +
+`h1–h4` now resolve to `var(--font-body)`; Clash still loaded but unused, safe to
+drop later). Feedback applied this pass:
+1. Hero is now CENTRED (eyebrow/headline/sub), Switzer headline, radial scrim.
+2. Hero particle form is the logo's OCEAN-WAVE CREST (`fWaveCrest`), not a circle.
+3. ClientPreview redesigned to a CENTRED showcase — photo is the mid-screen focal
+   point and the constellation is a cool elliptical HALO (`fConstellation`) that
+   frames/orbits it (anchor reads the centred photo's rect). Redundant proof chip
+   removed (it duplicated the heading). Halo size vs photo is approximate (tuned
+   blind to the live morph) — confirm/​nudge `ring` (GlobalCurrent + plot) on a
+   real GPU.
+Verified: hero on a real-viewport preview screenshot (centred + Switzer + wave);
+`plot-global.mjs` shows wave-crest + halo geometry; build + typecheck green.
+
+### Iteration 3 — user recorded the live scroll, 4 fixes (2026-06-29)
+
+User screen-recording (frames extracted via ffmpeg; NOTE macOS recording
+filenames contain a U+202F narrow-no-break-space before "PM" → ffmpeg can't open
+the literal path, glob-copy it first). Complaints + fixes:
+1. "Hero doesn't look like a wave" → `fWaveCrest` made much FULLER (more body,
+   stronger crest+curl, denser-near-crest). Confirmed fuller on a GPU screenshot.
+2. "'One current' (TheFork) looks cheap" → `fSplit` rebuilt as TWO clean ribbons
+   from a top trunk into the cards (was scattered dust; perp scatter 0.07→0.04).
+3. "Doesn't line up with the scroll" → ROOT CAUSE: formations were driven by
+   guessed scroll-% thresholds. Rebuilt to the anchor-derived STAGE system above
+   (computeStage). This is the big architectural fix.
+4. "Don't like the end" → was two clumps floating in the gap above the CTA.
+   Replaced `fReconverge` with `fSettle` — one calm wide wave that settles above
+   the CTA (current full circle). `fTalent` also reworked to a warm halo.
+### Iteration 4 — second recording: kill the rings, wave still off (2026-06-29)
+
+Recording 2 ("looking better"): sync is fixed. Two complaints left:
+1. "Big C's at 75% and the photo look terrible, don't match the flow" → the
+   client/talent HALOS rendered as hollow ovals / "C"s. ROOT FIX: halos are the
+   wrong metaphor for a flowing current. Replaced `fHalo`/`fTalent` with
+   `fClientCurrent`/`fTalentCurrent` — horizontal flowing WAVES at the section's
+   level; the opaque photo/card masks the middle so the current reads as flowing
+   AROUND the focal element (aBand spread 0.42). Now the whole page is one
+   continuous current (wave → split → flow past photo → warm flow → settle).
+2. "Wave needs to look more like a wave" (2nd time) → user picked "breaking barrel
+   (like the logo)" from a style question. Built `fWaveCrest` as a barrel (face →
+   spiral curl). On a REAL-viewport GPU screenshot it looked like SCATTERED NOISE
+   through the headline → user said "revert back that doesn't look good". REVERTED
+   `fWaveCrest` (+ plot mirror) to the prior swell-crest version (the rec2 look:
+   broad arc/swell behind the headline). Verified reverted on a GPU screenshot.
+   THE WAVE IS STILL UNSOLVED — 3 blind attempts (fuller / surface / barrel) all
+   missed. NEXT: get a REFERENCE IMAGE of the wave they want before trying again;
+   blind shape-guessing isn't converging. The barrel math is in git history / this
+   handoff if needed.
+Note: a real-viewport preview instance DOES appear sometimes (most are 0×0) — when
+you get one, screenshot the hero immediately; that's the only GPU check available.
+Verified: stage geometry in `plot-global.mjs` (currents flow, no rings), build +
+typecheck green, no shader compile errors. CURRENTS (client/talent) still NOT seen
+on GPU animated — pending the user's next recording.
+
+### Iteration 5 — recording 3 + footer cleanup (2026-06-29) — VERIFIED LIVE
+
+A preview instance came up with `document.hidden === false` (loop runs while
+scrolled!) so this round was verified on a real GPU by scroll+screenshot. Fixes:
+1. Removed the redundant TrustBand dual CTA (two stacked For brands/For talent
+   blocks — the global footer already has one). `trust` anchor moved to the
+   process strip. Dropped now-unused Link/Button imports.
+2. Hero pixels + split + client(blue) left untouched (user: "they look good").
+3+4. client→talent and talent→trust were "just a colour shift" (consecutive
+   horizontal currents cross-fading at similar Y). FIX: in main(), a per-particle
+   transition STAGGER that peaks mid-transition and only ramps up for uStage>1.6
+   (`stagger = 0.16 + smoothstep(1.6,2.2,uStage)*sin(fract(uStage)*PI)*0.62`).
+   Spreads the morph into a flowing blue→warm gradient field — VERIFIED in a
+   midpoint screenshot (both colours coexist + flow, no snap). Hero/split/client
+   keep tight stagger (0.16).
+5. "Pixels should hide behind the footer at the bottom, reappear on scroll up" →
+   new `uFade` uniform (multiplies vAlpha), computed each frame from the footer's
+   screen position: `sstep((footerTop - vh*0.3)/(vh*0.6))`, smoothed. VERIFIED:
+   full mid-page, ~0 at the bottom.
+Verified live (real-viewport, non-hidden instance): hero unchanged, talent=warm
+current (no ring), trust=current, bottom=dual-CTA-gone + faded. build+typecheck
+green, no shader errors. The WAVE shape is still the reverted swell (user hasn't
+re-specified after rejecting the barrel) — leave it until they give a reference.
+
+### Iteration 6 — legibility plates (2026-06-29) — VERIFIED LIVE
+
+User: "can't read the text with the current stopping point" (the Trust body
+paragraph sat under a dense band of the current). FIX: a radial "legibility
+plate" behind the centred text block in TrustBand (and proactively the left text
+column in TalentPreview) — `pointer-events-none absolute` div with a strong navy
+radial-gradient that dims the particles behind the COPY while the current still
+flows full-strength on the sides (content sits IN the current, readable). Did NOT
+touch the client section (user likes it; its text sits above the photo-level
+current, already clear) or the hero (already has a scrim). Verified live on a
+real-viewport/non-hidden instance: trust + talent copy now readable, current
+flows around. build+typecheck green. Pattern for any future "can't read X over
+particles": same plate behind that text block.
+
+### Iteration 7 — opaque talent card + marquee (2026-06-29) — VERIFIED LIVE
+
+1. "Make sure this block isn't transparent" (the talent 49%+/75%+ proof card) →
+   the warm current was bleeding through its `/60`+`/40` gradient. Made it opaque:
+   `bg-bg-deep bg-gradient-to-br from-[#1a1407] to-bg-deep`. Current now flows
+   AROUND it. Verified (cardBg rgb(6,17,30)).
+2. "Make these photos auto-scroll, smooth loop" (TeamRail) → rebuilt TeamRail as a
+   seamless MARQUEE: doubled track + `animate-team-marquee` (translateX 0→-50%,
+   32s linear infinite — keyframe added to tailwind.config). Cells use `mr-4`
+   (uniform width) so -50% lands exactly on the 2nd copy = no seam. Edge mask-fade,
+   pause-on-hover, reduced-motion → static swipeable row. Verified live: two
+   screenshots showed the rail advanced (continuous scroll). build+typecheck green.
+
+### Iteration 8 — blue+gold twist ending + soft wave edges (2026-06-29) — VERIFIED LIVE
+
+1. "Make the white do a blue+gold twist then hide behind the footer" → new
+   `fTwist` braid (two strands by aStream, opposite-phase sines that cross =
+   blue/gold helix). New `uTwist` uniform (0=white settle, 1=braid) ramps from the
+   footer position (`1 - sstep((footerTop-0.9vh)/0.4vh)`) — earlier than `uFade`,
+   so the order is white settle → blue+gold braid → fade behind footer. Stage-4
+   pos = `mix(fSettle,fTwist,uTwist)`, colour = `mix(cChrome, cSplit, uTwist)`.
+   Verified live across scroll positions (white @1.5vh, braid @0.9vh, fade <0.5vh).
+2. "Border on the left/right too harsh" (hero wave cut off hard at the sides) →
+   alpha edge-fade on the outer ~12% of aT (`aTedge`), PROTECTED near stage 1 so
+   the split streams still land hard in the cards (`mix(1,aTedge,smoothstep(0.5,1,
+   abs(uStage-1)))`). Verified: hero wave now tapers softly L/R.
+NOTE: `plot-global.mjs` does NOT model uTwist/uFade/edge-fade (runtime uniforms);
+geometry there is still valid but the ending/edges are verified LIVE only.
+
+Follow-up: user wanted the settle/twist band moved from ABOVE the 01-04 strip
+(over the body copy) to UNDER the "Trained, compliant…" line → changed both
+`fSettle` and `fTwist` y-offset from `e.y + 0.30` to `e.y - 0.42` (e = trust/strip
+anchor). Verified live: band now sits in the open space below the strip, copy +
+strip clear. (If they want a bigger gap under the Trained line, go more negative.)
+
+### Iteration 9 — site polish pass + AI filler imagery (2026-06-29)
+
+A) POLISH PASS (ran ui-ux-pro-max + impeccable as the lens; audited every page via
+a background workflow — kept the scroll system + brand gradient text/eyebrows
+untouched). Implemented: form a11y (StrategyCallForm: label htmlFor/id, name,
+autocomplete, removed input `outline-none` so the global focus ring shows),
+Button `focus-visible:outline-offset-2`, Footer social icons → 44px (h-11 w-11),
+About team names `<p>`→`<h3>`, FAQ button hover + `aria-hidden` on its Plus,
+Header `tracking-display`(undefined)→`tracking-[-0.03em]`, `aria-hidden` on
+decorative MapPin/Quote icons, careers off-scale spacing (py-1.5→2, py-2.5→3),
+careers IG label "IG"→descriptive. No P0s were found. Build+typecheck green.
+
+B) FILLER IMAGERY (Higgsfield soul_2, user chose "realistic AI people"). Generated
++ wired the HOME slots: ClientPreview rep-in-field (`/media/rep-field.webp`) and
+the 4 TeamRail moments (`/real/moment-{huddle,close,board,promo}.webp`). All in
+`src/lib/media.ts` under an "AI-GENERATED FILLER … swap before launch" block,
+optimized to webp + blur placeholders, verified on a real-viewport preview.
+STILL TODO (next batch): the other-page slots — partner/page.tsx (1), careers/page.tsx
+(2 + the 3 IG 1:1 tiles), about/page.tsx (3), careers/DayInLife.tsx frames.
+Pipeline: generate_image(soul_2, aspect, prompt) → poll job_display/show_generations →
+curl rawUrl → sharp resize→webp + 16px blur → public/ → media.ts → component.
+
+### Iteration 10 — numbered lists redesigned (2026-06-29) — VERIFIED LIVE
+
+User: the vertical numbered lists "look so cheap and off" (a tiny number floating
+on a hairline `border-l`; on the timeline ones the line didn't pass through the
+badge centres). Fixed all 3:
+- `HowItWorks.tsx` (partner) and the careers ladder (`careers/page.tsx`): rebuilt
+  as flex timelines — `<li className="flex gap-5 pb-7 last:pb-0">`, a `w-9`
+  badge column (`relative flex flex-col items-center`) with a centred connector
+  `<span absolute left-1/2 top-9 -bottom-7 w-px -translate-x-1/2>` (so the line
+  runs through the badge centre, verified badgeCx==connCx live), z-10 `bg-bg`
+  badges over the line, font-display tabular-nums numbers. Blue / gold per page.
+- partner case-study skeleton list (`partner/page.tsx`): compact inline numbered
+  badges (h-6 w-6 circles), no hairline.
+Verified on a fresh-CSS preview (NOTE: a reused dev server served STALE CSS —
+`relative`→static, `w-9` not applied — always restart fresh when classes look
+unapplied; the production build is the source of truth). build+typecheck green.
+
+### Iteration 11 — remaining filler imagery + brighter Halifax (2026-06-29) VERIFIED
+
+User: "the rest of the images" + the Coverage Halifax shot is "too dark."
+- Brighter Halifax: new `media.halifaxBright` (`/media/halifax-bright.webp`, sunny
+  daytime waterfront) wired into the Partner Coverage MediaFrame (replaced the dark
+  `halifaxHarbour`, which the About hero keeps — it's scrimmed there). Verified live.
+- Careers values grid: `valueEnergy`/`valueGrowth`/`valueIntegrity` mapped by value
+  name (Teamwork still uses the real `teamGroup`). Verified — looks great.
+- Careers Day-in-the-Life beats: `dilMorning` / reuse `repField` (Midday) /
+  `dilAfternoon` / `dilEvening`, mapped by index. Verified (afternoon beat).
+- Careers Instagram tiles ×3: `ig1/ig2/ig3`.
+- SKIPPED on purpose: the careers TESTIMONIAL frame — its on-page caption says
+  "Authentic footage · no actors, no stock, no AI", so AI there would contradict
+  itself. Left as the crafted placeholder. (DayInLife's "no AI" is only a code
+  comment, no on-page claim, so it was filled — comment updated to note swap.)
+All 10 new images: Higgsfield soul_2 → webp+blur in media.ts AI-filler block
+(batch 2). build+typecheck green.
+
+OPEN: user pasted the repo URL https://github.com/Novera-Industries/atlantic-connect-marketing.git
+— project is NOT a git repo locally yet; asked whether to init+commit+push (not done
+without explicit go-ahead). Also still open: the hero WAVE shape (needs a reference).
+
+### Phase 1 FIXED + Phase 2 + Phase 3 BUILT (2026-06-29)
+
+Phase 3 (this pass): graceful no-WebGL fallback (try/catch around the renderer);
+firmer mobile budget (viewport-tiered COUNT 20k/14k/9k/6.5k + DPR capped 1.5 on
+phones — fill-rate is the mobile bottleneck); a designed reduced-motion static
+state (`StaticCurrent.tsx`, a quiet two-temperature CSS atmosphere shown instead
+of the canvas); and light directional legibility scrims on the three lower
+sections (content lifted above via `relative z-10`). The bloom now RENDERS and
+reads great at scroll 0 on a real viewport (confirmed by screenshot). Remaining:
+Phase 4 + the user's full-journey on-GPU/on-phone confirmation.
+
+Key files (Phase 1):
+- `src/components/home/GlobalCurrent.tsx` — the fixed full-page Three.js particle
+  engine. Formations (bloom/wave/split/ambient) in the vertex shader, driven by
+  Motion `useScroll` over the content wrapper. Has a dev hook
+  `window.__forceProgress = <0..1>` to inspect any formation at any scroll.
+- `src/components/home/anchors.ts` — `useBlockAnchor(name)` registry; the engine
+  reads the Partner/Careers card rects each frame so streams lead INTO them.
+- `src/components/home/HomeStage.tsx` — renders `<GlobalCurrent>` (lazy, ssr:false)
+  + wraps the sections in a `relative z-10` div passed to the engine as scroll target.
+- `src/app/page.tsx` — `<HomeStage>` wrapping Hero/TheFork/ClientPreview/TalentPreview/TrustBand.
+- `src/components/home/Hero.tsx` — shader/plate removed, headline over particles.
+- `src/components/home/TheFork.tsx` — local canvas+pin removed; heading + two cards
+  registered as anchors (`useBlockAnchor("partner"|"careers")`).
+- TalentPreview/TrustBand — opaque section bg removed (so particles show).
+
+Verified: engine renders (bloom shows on clean load), scroll-progress is exact
+(measured p=0.16 at the right scroll), and `scripts/plot-global.mjs` →
+`scripts/global-preview.png` confirms the formation GEOMETRY is correct
+(bloom → wave → split-into-card-boxes).
+
+### THE BUG — FIXED (2026-06-29)
+
+User reported "I don't see anything" on a real GPU. Root cause: the canvas mount
+was `fixed inset-0 -z-10`. A fixed element with **negative** z-index paints in
+the root stacking context's negative layer — i.e. *below* `<body>`'s in-flow
+opaque navy `bg-bg`, which then paints over it (CSS Appendix E order: html bg →
+neg-z children → body bg). The Preview screenshot tool reads the WebGL buffer
+directly so it "showed" bloom, masking the bug; the real-browser report was
+ground truth.
+
+Fix applied:
+- `GlobalCurrent.tsx`: canvas div `-z-10` → `z-0` (now paints *above* the body
+  bg, still below content `z-10`) + `pointer-events-none`. Body bg left navy as
+  the guaranteed ground; transparent additive particles composite over it.
+- `Hero.tsx`: scrims lightened (`from-bg/85`→`/65`, `from-bg/70`→`/55`) so the
+  Current reads through.
+Verified: `npm run build` + `npm run typecheck` green; live preview computed
+styles show `mountZ:0`, `position:fixed`, `pointer-events:none`, navy body/html;
+`scripts/plot-global.mjs` still shows correct bloom→wave→split geometry. Final
+on-GPU look is the user's to confirm (preview viewport is 0×0 headless → cannot
+render the fixed canvas). Possible follow-up tuning to taste: particle
+size/brightness/density.
+
+### Verification constraint (important — updated)
+
+The Preview tool runs **software WebGL in a headless tab that reports
+`document.hidden === true`**, so the browser **throttles requestAnimationFrame to
+~0 after the first frame**. Consequence: the engine renders ONE frame (the bloom
+at scroll 0 — which now looks correct, confirmed by screenshot) and then can't
+advance, so `window.__forceProgress` and scroll CANNOT drive the journey here.
+Viewport is sometimes 0×0 and sometimes real (~1325×1030) depending on the
+instance. Net: screenshots only verify the scroll-0 bloom; they cannot show the
+morph. Verify the journey via: (1) `node scripts/plot-global.mjs` for geometry
+(the reliable path), (2) the **user's real browser** for motion (the only
+reliable animated check).
+
+Note: Motion's `useScroll` logs a pre-existing, non-fatal "ensure the container
+has a non-static position" warning on the home page (all scroll targets ARE
+relative — it's a Motion/Lenis heuristic, not our regression; making the CountUp
+span relative did NOT silence it). Functionality is unaffected (bloom maps at
+p≈0 correctly). Investigate on real hardware if it ever proves real.
+
+### Next steps
+
+1. DONE: layering bug fixed (canvas z-0; see above).
+2. DONE: Phase 2 built — constellation/talent/reconverge formations in the shader
+   (`fConstellation`/`fTalent`/`fReconverge`, uniforms `uAnchorC/D/E`), plus a new
+   `AnchorPoint` client wrapper so the server sections register anchors. Anchors
+   attached: Client media (ClientPreview), Talent proof card (TalentPreview),
+   Trust CTA grid (TrustBand). Bloom enlarged to a dense nebula. `plot-global.mjs`
+   now renders all six beats. NEXT: user confirms the full journey on a real GPU
+   and we tune density/colour/glow/size to taste.
+3. DONE: Phase 3 — per-section scrims (ClientPreview/TalentPreview/TrustBand),
+   `StaticCurrent` reduced-motion atmosphere, no-WebGL try/catch, viewport-tiered
+   mobile budget + DPR cap. NEXT: confirm the scrims read well over live particles
+   on a real GPU (added blind to the morph — likely need tuning), and PROFILE ON A
+   REAL PHONE (the reference video's whole point).
+4. Phase 4: polish + 60fps profiling (incl. the 5 getBoundingClientRect/frame for
+   anchors — throttle or gate-by-phase if it shows up). Resolve the pre-existing
+   Motion useScroll warning if real. Remove `__forceProgress`.
+
+Old per-section particle Fork (`src/components/home/CurrentParticles.tsx`) and the
+hero shader (`src/components/brand/CurrentCanvas.tsx`) are retired from the home
+but kept in-repo. `scripts/plot-particles.mjs` plots the old Fork formations.
