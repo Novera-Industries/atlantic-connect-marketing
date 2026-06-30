@@ -1,0 +1,26 @@
+# Atlantic Connect Marketing — app container for the Vyra VPS.
+#
+# This box already runs Caddy as the public TLS edge (auto Let's Encrypt) in
+# front of several loopback apps. So we do NOT ship nginx/certbot — Caddy stays
+# the edge. This compose only runs the Next.js standalone server, published on
+# 127.0.0.1:${APP_PORT}; a Caddy block reverse-proxies acm.vyradata.com to it.
+#
+# Deploy with ./deploy.sh (builds, starts, and wires the Caddy site block).
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Inlined into the build (canonical URLs). Defaults to the ACM host.
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://acm.vyradata.com}
+    image: acm-site:latest
+    container_name: acm-site
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    ports:
+      # Loopback only — Caddy is the public edge. host APP_PORT -> container 3000.
+      - "127.0.0.1:${APP_PORT:-8101}:3000"

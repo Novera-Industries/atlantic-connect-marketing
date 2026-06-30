@@ -1,0 +1,27 @@
+# Keep the build context small — only source + config + public assets are needed.
+node_modules
+.next
+out
+build
+coverage
+
+.git
+.gitignore
+.DS_Store
+*.tsbuildinfo
+npm-debug.log*
+
+# Docs / deploy tooling / source assets not needed inside the image
+README.md
+HANDOFF.md
+DEPLOY.md
+assets-src
+scripts/*.png
+deploy
+deploy.sh
+Dockerfile
+.dockerignore
+docker-compose.yml
+.env
+.env*.local
+.vercel

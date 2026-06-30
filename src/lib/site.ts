@@ -6,8 +6,10 @@
 export const site = {
   name: "Atlantic Connect Marketing Inc.",
   shortName: "Atlantic Connect Marketing",
-  // Replace with the production origin at deploy time (VPS + Cloudflare).
-  url: "https://atlanticconnectmarketing.ca",
+  // Production origin. Override per-deployment with NEXT_PUBLIC_SITE_URL
+  // (inlined at build time) — e.g. https://acm.vyradata.com for the VPS preview.
+  // Falls back to the canonical production domain when unset.
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://atlanticconnectmarketing.ca",
   // Brand spine (em dash removed per direction; meaning preserved).
   spine:
     "genuine connections between people, brands, and communities.",

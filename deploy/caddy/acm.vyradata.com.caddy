@@ -1,0 +1,17 @@
+# Reference copy of the Caddy site block deploy.sh appends to /etc/caddy/Caddyfile.
+# If APP_PORT changes in .env, the deployed block uses that value (this file is
+# just documentation / a manual-paste fallback). Default upstream is :8101.
+
+# ─── Atlantic Connect Marketing (acm.vyradata.com) ──────────────────────────
+acm.vyradata.com {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8101 {
+        header_up X-Real-IP {remote_host}
+    }
+    header {
+        -Server
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
