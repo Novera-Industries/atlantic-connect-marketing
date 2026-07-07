@@ -72,7 +72,7 @@ const VERT = /* glsl */ `
     float tick = floor(uTime * 6.0) + floor(aRand * 4.0);
     gx += (hash(tick + aRand * 91.7) - 0.5) * 0.15;
     gy += (hash(tick + aRand2 * 57.3) - 0.5) * 0.15;
-    return vec3(gx, gy, (aRand2 * 2.0 - 1.0));
+    return vec3(gx, gy, (aRand2 - 0.5));
   }
   // Client: THE SEA — a perspective dot-ocean receding to a horizon just above
   // the photo. Near rows are wide and swell; far rows compress toward the
@@ -175,7 +175,7 @@ const VERT = /* glsl */ `
     vec3 P7 = mix(fSettle(), fTwist(), uTwist); // culture close — settle → blue+gold braid
 
     vec3 cMerged = mix(uCool, uChrome, 0.45 + 0.35 * hash(aRand)); // hero vortex (silvery, reference-white)
-    vec3 cNoise  = mix(uChrome, uCool, 0.4) * 0.62;                // tension static (dim, cold)
+    vec3 cNoise  = mix(uChrome, uCool, 0.4) * 0.85;                // tension static (cold, crisp)
     vec3 cCool   = mix(uCool, uChrome, 0.18);                      // client (cool)
     vec3 cThread = mix(uCool, uChrome, 0.35);                      // process (cool silver)
     vec3 cSplit  = (aStream < 0.0) ? uCool : uWarm;                // partner / careers
@@ -213,8 +213,8 @@ const VERT = /* glsl */ `
 
     // depth shading (the volume illusion): far particles smaller and dimmer.
     float depth01 = clamp(pos.z, -1.0, 1.0) * 0.5 + 0.5;
-    float dSize = mix(1.3, 0.55, depth01);
-    float dAlpha = mix(1.1, 0.5, depth01);
+    float dSize = mix(1.3, 0.58, depth01);
+    float dAlpha = mix(1.15, 0.62, depth01);
 
     // the vortex EYE glows: particles near the hero disk's centre get a hot core
     // (only while the journey is at/near stage 0).
@@ -224,9 +224,9 @@ const VERT = /* glsl */ `
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.xy, 0.0, 1.0);
 
-    float twinkle = 0.7 + 0.3 * sin(uTime * 1.5 + aRand * 30.0);
+    float twinkle = 0.78 + 0.22 * sin(uTime * 1.5 + aRand * 30.0);
     // reference-tier size field: MANY fine dots, a FEW bright carriers.
-    float size = 0.9 + pow(aRand2, 2.0) * 3.6;
+    float size = 1.35 + pow(aRand2, 1.7) * 4.4;
     gl_PointSize = size * dSize * (1.0 + coreBoost * 0.7) * uPointScale * uPixelRatio * twinkle;
 
     vColor = col;
@@ -239,8 +239,10 @@ const VERT = /* glsl */ `
     float edgeW = min(smoothstep(0.5, 1.0, abs(uStage - 5.0)), smoothstep(0.5, 1.0, abs(uStage - 1.0)));
     float edge = mix(1.0, aTedge, edgeW);
     // the vortex reads denser/hotter than the travelling formations (reference look)
-    float heroLift = (1.0 - smoothstep(0.4, 1.0, uStage)) * 0.3;
-    vAlpha = ((0.5 + 0.5 * sin(aT * 12.0 + uTime)) * 0.5 + 0.5) * (1.0 + heroLift) * uFade * edge * dAlpha;
+    float heroLift = (1.0 - smoothstep(0.4, 1.0, uStage)) * 0.25;
+    // alpha floor raised: the recording showed the whole journey too faint — the
+    // reference's dots are crisp and bright, density carries the drama.
+    vAlpha = (0.72 + 0.28 * (0.5 + 0.5 * sin(aT * 12.0 + uTime))) * (1.0 + heroLift) * uFade * edge * dAlpha;
   }
 `;
 
@@ -254,7 +256,7 @@ const FRAG = /* glsl */ `
     if (d > 0.5) discard;
     float a = smoothstep(0.5, 0.0, d);
     float core = smoothstep(0.26, 0.0, d);
-    gl_FragColor = vec4(vColor + core * 0.6, a * vAlpha);
+    gl_FragColor = vec4(vColor + core * 0.85, a * vAlpha);
   }
 `;
 

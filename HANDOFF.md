@@ -4,6 +4,31 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 15 — radiance pass from the user's live recording (2026-07-07)
+
+User recorded the real scroll (Downloads/Screen Recording 2026-07-07 at 7.23.31 PM
+.mov — NOTE the first attempt was a drag from the floating thumbnail whose
+ephemeral NSIRD temp file vanished before it could be read; ask for a saved
+file). Frame review: ALL mechanics work live (pin scrub activates steps, count-
+ups run, sticky bar behaves, morphs happen) but every formation rendered far too
+FAINT — dust, not the reference's crisp bright dots. Four compounding causes,
+all fixed:
+1. GROUND: home now plays in the hero void — a fixed `bg-bg-deep` layer under
+   the canvas (HomeStage, DOM-order sibling before it). The site-wide navy was
+   eating the additive particles' contrast.
+2. ALPHA STACK: flicker floor 0.5→0.72 (`0.72 + 0.28*wave`), dAlpha 0.5–1.1 →
+   0.62–1.15, fNoise z halved to ±0.5 so static isn't depth-dimmed.
+3. SIZE: `1.35 + pow(aRand2,1.7)*4.4` (was 0.9 + pow²*3.6); twinkle 0.78–1.0.
+4. HEAT: FRAG core 0.6→0.85; cNoise dim 0.62→0.85; heroLift trimmed 0.3→0.25
+   (floor already raised).
+Verified on fresh-load first frames: desktop vortex now bright, arms over ~70%
+width on the near-black ground; mobile 375 arms span nearly full width. Plot
+unchanged (geometry untouched).
+DEV-SERVER GOTCHA (hit twice): HMR after GlobalCurrent/HomeStage edits corrupts
+the dev server (`TypeError: a[d] is not a function` on /, unstyled HTML). Fix:
+stop server, `rm -rf .next`, `npm run build`, fresh start. Do this FIRST if the
+page 500s or screenshots come back unstyled.
+
 ## Iteration 14 — reference-tier particle redesign: THE VORTEX (2026-07-07)
 
 User re-sent the textura.eu/HELIOS reference video (same file as iteration 2;

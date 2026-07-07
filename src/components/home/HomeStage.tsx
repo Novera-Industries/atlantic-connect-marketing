@@ -22,6 +22,11 @@ export function HomeStage({ children }: { children: ReactNode }) {
 
   return (
     <>
+      {/* the home journey plays in the hero void (near-black, bg-deep) — the
+          reference's contrast: bright crisp dots need a dark ground, and the
+          site-wide navy was washing the Current out (user recording, iter 15).
+          DOM-order sibling before the canvas: same z-plane, paints beneath it. */}
+      <div aria-hidden className="fixed inset-0 z-0 bg-bg-deep" />
       {reduced ? <StaticCurrent /> : <GlobalCurrent targetRef={contentRef} />}
       <div ref={contentRef} className="relative z-10">
         {children}
