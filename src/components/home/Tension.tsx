@@ -18,7 +18,7 @@ export function Tension() {
       name="noise"
       as="section"
       id="tension"
-      className="relative isolate flex min-h-[110svh] items-center overflow-hidden bg-bg-deep/40"
+      className="relative isolate flex min-h-[110svh] items-center overflow-hidden bg-[rgba(6,17,30,0.4)]"
     >
       {/* legibility plate — the static crackles around the copy, not over it */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(52%_46%_at_50%_50%,rgba(6,17,30,0.88),rgba(6,17,30,0.4)_60%,transparent_82%)]" />

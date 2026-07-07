@@ -4,6 +4,26 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 18 — particles crossed text: the alpha-modifier classes never existed (2026-07-07)
+
+User screenshots: streams crossing the coverage-tile copy, gold rise blowing
+through the ladder-rung copy. ROOT CAUSE (site-wide, since day one): Tailwind
+CANNOT compose opacity modifiers onto colors defined as plain `var(--x)` strings
+(no `<alpha-value>`), so classes like `bg-bg-elev/95`, `bg-bg-deep/90|55|40`,
+`bg-bg/80`, `bg-bg-deep/95` were SILENTLY NEVER GENERATED — those surfaces were
+fully transparent and only backdrop-blur (which does compile) masked it.
+Verified in the compiled CSS (only `.bg-bg-deep{}` existed, no variants).
+RULE FOR THIS REPO: never use `/NN` opacity on the var-based color tokens (bg,
+bg-elev, bg-deep, line, ink, muted, subtle, brand*). Use the solid token or an
+arbitrary `bg-[rgba(...)]`. (The literal hex tokens — chrome-*/gold-* — DO
+support modifiers; `border-gold-mid/25` etc. are fine.)
+Fixes: coverage tiles + ladder rungs → SOLID (`bg-bg-elev` / `bg-bg-deep`, the
+current flows around them); sticky bar → rgba(6,17,30,0.92); fork cards →
+rgba(6,17,30,0.65); tension wash → rgba(6,17,30,0.4); header scrolled →
+rgba(11,26,43,0.85); mobile menu → rgba(6,17,30,0.97); proof stat plate
+strengthened (0.95 core, wider). All verified in compiled CSS + live computed
+styles (tile rgb(15,34,54), rung rgb(6,17,30), fork rgba(6,17,30,0.65)).
+
 ## Iteration 17 — "choppy" was the static's 6Hz clock, not jank (2026-07-07)
 
 Recording 4 (Documents/…7.59.14 PM.mov, 5.5s parked on the TENSION act):

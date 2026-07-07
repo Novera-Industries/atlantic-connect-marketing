@@ -84,7 +84,7 @@ function ForkCTA({
           href={href}
           data-cursor="link"
           className={cn(
-            "group flex max-w-md flex-col rounded-card border bg-bg-deep/55 p-6 backdrop-blur-md transition-colors sm:p-8",
+            "group flex max-w-md flex-col rounded-card border bg-[rgba(6,17,30,0.65)] p-6 backdrop-blur-md transition-colors sm:p-8",
             warm ? "border-gold-mid/30 hover:border-gold-mid/60" : "border-brand/30 hover:border-brand-bright/60"
           )}
         >

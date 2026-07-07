@@ -41,8 +41,11 @@ export function ProofCoverage() {
         <AnchorPoint name="coverage">
           {/* the four lanes of the Current flow behind these four channels */}
           <RevealGroup className="mx-auto mt-14 grid max-w-4xl gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {/* solid tiles: the streams flow AROUND the channels, never through
+                the copy (bg-bg-elev/95 never compiled — var colors don't take
+                alpha modifiers; see HANDOFF iteration 18) */}
             {partner.coverage.channels.map((c) => (
-              <RevealItem key={c.title} className="bg-bg-elev/95 p-6">
+              <RevealItem key={c.title} className="bg-bg-elev p-6">
                 <h3 className="font-display text-lg font-semibold text-ink">{c.title}</h3>
                 <p className="mt-2 text-sm text-subtle">{c.body}</p>
               </RevealItem>
@@ -52,7 +55,7 @@ export function ProofCoverage() {
           <Reveal delay={0.08}>
             <div className="relative mx-auto mt-12 max-w-2xl">
               {/* legibility plate — the coverage lanes flow around the stats, not over them */}
-              <div className="pointer-events-none absolute -inset-x-8 -inset-y-4 bg-[radial-gradient(70%_85%_at_50%_50%,rgba(11,26,43,0.88),rgba(11,26,43,0.45)_62%,transparent_86%)]" />
+              <div className="pointer-events-none absolute -inset-x-10 -inset-y-6 bg-[radial-gradient(74%_88%_at_50%_50%,rgba(6,17,30,0.95),rgba(6,17,30,0.6)_66%,transparent_92%)]" />
               <dl className="relative grid grid-cols-3 gap-6 border-y border-line py-7 text-center">
                 {stats.map((s) => (
                   <div key={s.label}>

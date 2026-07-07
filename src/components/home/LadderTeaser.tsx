@@ -48,7 +48,9 @@ export function LadderTeaser() {
                 key={r.role}
                 as="div"
                 className={cn(
-                  "rounded-card border border-gold-mid/25 bg-bg-deep/90 p-6",
+                  // solid: the warm rise flows AROUND the rungs (bg-bg-deep/90
+                  // never compiled — var colors don't take alpha modifiers)
+                  "rounded-card border border-gold-mid/25 bg-bg-deep p-6",
                   i === 1 && "lg:mb-10",
                   i === 2 && "lg:mb-20",
                   i === 3 && "border-gold-mid/50 lg:mb-32"

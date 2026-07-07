@@ -48,7 +48,7 @@ export function Header() {
       <div
         className={cn(
           "border-b transition-colors duration-300",
-          scrolled ? "border-line bg-bg/80 backdrop-blur-xl" : "border-transparent bg-transparent"
+          scrolled ? "border-line bg-[rgba(11,26,43,0.85)] backdrop-blur-xl" : "border-transparent bg-transparent"
         )}
       >
         <div className="mx-auto flex h-[var(--header-h)] max-w-shell items-center justify-between gap-4 px-5 sm:px-8">
@@ -96,7 +96,7 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 top-[var(--header-h)] z-[90] bg-bg-deep/95 backdrop-blur-xl md:hidden"
+            className="fixed inset-0 top-[var(--header-h)] z-[90] bg-[rgba(6,17,30,0.97)] backdrop-blur-xl md:hidden"
           >
             <nav className="flex flex-col gap-2 px-6 py-8" aria-label="Mobile">
               {nav.map((item, i) => (

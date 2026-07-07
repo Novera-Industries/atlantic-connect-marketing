@@ -40,7 +40,7 @@ export function StickyCall() {
           transition={{ duration: reduced ? 0.15 : 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 sm:inset-x-auto sm:right-6 sm:bottom-6"
         >
-          <div className="flex items-center gap-3 rounded-full border border-line bg-bg-deep/90 py-2 pl-2 pr-3 shadow-lift backdrop-blur-md sm:gap-4 sm:pl-2.5 sm:pr-4">
+          <div className="flex items-center gap-3 rounded-full border border-line bg-[rgba(6,17,30,0.92)] py-2 pl-2 pr-3 shadow-lift backdrop-blur-md sm:gap-4 sm:pl-2.5 sm:pr-4">
             <Button href="/partner#contact" variant="primary" size="md" magnetic={false}>
               {s.label}
             </Button>
