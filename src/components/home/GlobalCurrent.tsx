@@ -62,16 +62,18 @@ const VERT = /* glsl */ `
     return vec3(disk.x, disk.y * 0.46 - 0.18, depth);
   }
   // Tension: the one moment the Current is NOT water — cold digital STATIC.
-  // A loose full-width field of points that snap position in hard clocked steps
-  // (screen noise, staccato) around the tension copy. Resolves back into the
-  // flowing current at the next stage — chaos organizing into connection.
+  // A loose full-width field around the tension copy. IMPORTANT: the shimmer is
+  // CONTINUOUS with per-particle random phases — an earlier version snapped all
+  // particles on one global 6Hz clock and the user read the whole page as
+  // "choppy". Nothing here may step on a shared clock; the static texture comes
+  // from decorrelated micro-drift plus per-particle alpha flicker (see main()).
   vec3 fNoise() {
     vec2 f = uAnchorF;
     float gx = (fract(aRand * 13.73) - 0.5) * 2.0 * uAspect * 0.94;
     float gy = f.y + (fract(aRand2 * 7.31) - 0.5) * 1.55;
-    float tick = floor(uTime * 6.0) + floor(aRand * 4.0);
-    gx += (hash(tick + aRand * 91.7) - 0.5) * 0.15;
-    gy += (hash(tick + aRand2 * 57.3) - 0.5) * 0.15;
+    float ph = aRand * 6.2831 + aRand2 * 17.0;
+    gx += sin(uTime * 9.0 + ph) * 0.018 + sin(uTime * 2.3 + ph * 1.7) * 0.02;
+    gy += cos(uTime * 11.0 + ph) * 0.018 + cos(uTime * 2.9 + ph * 0.8) * 0.02;
     return vec3(gx, gy, (aRand2 - 0.5));
   }
   // Client: THE SEA — a perspective dot-ocean receding to a horizon just above
@@ -243,6 +245,11 @@ const VERT = /* glsl */ `
     // alpha floor raised: the recording showed the whole journey too faint — the
     // reference's dots are crisp and bright, density carries the drama.
     vAlpha = (0.72 + 0.28 * (0.5 + 0.5 * sin(aT * 12.0 + uTime))) * (1.0 + heroLift) * uFade * edge * dAlpha;
+    // TV-static flicker near the tension act: each particle blinks on its OWN
+    // clock (random phase), so the field shimmers at 60fps with no global pulse.
+    float staticGate = 1.0 - min(abs(uStage - 1.0), 1.0);
+    float flick = hash(floor(uTime * 14.0 + aRand * 97.0) + aRand2 * 31.0);
+    vAlpha *= mix(1.0, 0.35 + 0.9 * flick, staticGate);
   }
 `;
 
@@ -284,9 +291,10 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
     } catch {
       return;
     }
-    // Cap DPR harder on phones — additive blending is fill-rate bound, and the
-    // reference clip's whole point is that this stays smooth on mobile.
-    const DPR = Math.min(window.devicePixelRatio || 1, wide ? 1.75 : 1.5);
+    // Cap DPR — additive blending is fill-rate bound (the mobile bottleneck, and
+    // after the radiance pass the desktop one too); 1.6 is visually identical at
+    // arm's length and ~17% cheaper than 1.75 in raster area.
+    const DPR = Math.min(window.devicePixelRatio || 1, wide ? 1.6 : 1.5);
     renderer.setPixelRatio(DPR);
     renderer.setClearColor(0x000000, 0);
     Object.assign(renderer.domElement.style, { width: "100%", height: "100%", display: "block" });
@@ -380,6 +388,19 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       out.set(ndcX * aspect, ndcY);
     };
 
+    // Each anchor's journey waypoint + the uniform its rect feeds. The render
+    // loop only reads rects for anchors near the live stage.
+    const ANCHOR_MAP = [
+      ["noise", 1, "uAnchorF", true],
+      ["client", 2, "uAnchorC", true],
+      ["process", 3, "uAnchorG", true],
+      ["coverage", 4, "uAnchorH", true],
+      ["partner", 5, "uAnchorA", false],
+      ["careers", 5, "uAnchorB", false],
+      ["talent", 6, "uAnchorD", true],
+      ["trust", 7, "uAnchorE", true],
+    ] as const;
+
     // Journey stage 0..7 from where each section sits on screen. Waypoints are the
     // scroll positions at which each section centres in the viewport, so stage (and
     // thus the formation) tracks the actual content rather than a guessed scroll-%.
@@ -432,19 +453,19 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
     const loop = () => {
       if (!running) return;
       uniforms.uTime.value = clock.getElapsedTime();
-      anchorWorld("partner", uniforms.uAnchorA.value);
-      anchorWorld("careers", uniforms.uAnchorB.value);
-      anchorWorld("client", uniforms.uAnchorC.value, true);
-      anchorWorld("talent", uniforms.uAnchorD.value, true);
-      anchorWorld("trust", uniforms.uAnchorE.value, true);
-      anchorWorld("noise", uniforms.uAnchorF.value, true);
-      anchorWorld("process", uniforms.uAnchorG.value, true);
-      anchorWorld("coverage", uniforms.uAnchorH.value, true);
       // __forceStage: optional dev override (0..7) to inspect any formation.
       const forced = (window as unknown as { __forceStage?: number }).__forceStage;
       const target = typeof forced === "number" ? forced : computeStage();
       stage.current += (target - stage.current) * 0.12;
       uniforms.uStage.value = stage.current;
+      // Only read the rects of anchors whose formation is near the current stage
+      // (stagger spreads a morph by ±0.4 at most): 9 getBoundingClientRect calls
+      // per frame → ~3, the layout-read cost the Phase-4 note predicted.
+      for (const [name, st, uni, centre] of ANCHOR_MAP) {
+        if (Math.abs(stage.current - st) < 1.35) {
+          anchorWorld(name, uniforms[uni].value, centre);
+        }
+      }
       // Near the bottom: first the white current BRAIDS into the blue+gold twist
       // (uTwist), then it hides behind the footer (uFade). Twist ramps up earlier
       // than the fade so you see the braid before it disappears.

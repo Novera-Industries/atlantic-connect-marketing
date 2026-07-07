@@ -4,6 +4,26 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 17 — "choppy" was the static's 6Hz clock, not jank (2026-07-07)
+
+Recording 4 (Documents/…7.59.14 PM.mov, 5.5s parked on the TENSION act):
+"this isnt smooth looks very choppy". Frame-delta analysis (tblend=difference →
+YAVG series) showed a METRONOMIC ~6.5Hz update — 8-10 frozen frames then one
+uniform jump — which exactly matches fNoise's designed `floor(uTime * 6.0)`
+snap clock. NOT a performance problem: every particle snapped on the SAME
+global 6Hz clock and the eye read the page as lagging. LESSON for this engine:
+never step anything on a shared clock; decorrelate per particle.
+FIXES: (1) fNoise rebuilt — continuous micro-drift with per-particle random
+phases; (2) TV-static feel moved to ALPHA: per-particle 14Hz flicker with
+random phase offsets, gated to stage 1 (`staticGate`), shimmers at 60fps with
+no global pulse. Plus two free perf wins while in there: (3) anchor
+getBoundingClientRect reads now gated by stage proximity via ANCHOR_MAP (9 →
+~3 reads/frame — the Phase-4 layout-read concern); (4) desktop DPR cap 1.75 →
+1.6 (~17% raster area). Verified: clean build, fresh server, hero frame good.
+If real scroll jank is still reported: test the PRODUCTION build first
+(`npm run build && npm start` — dev mode is materially slower), then consider
+COUNT 20k→16k desktop and carrier size cap before touching the look.
+
 ## Iteration 16 — dissolution morphs (recording 3, 2026-07-07)
 
 Recording 3 (7.34.56 PM): radiance FIXED — vortex strong, static visible, helix

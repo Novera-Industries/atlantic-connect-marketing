@@ -49,9 +49,9 @@ function fVortex(p) {
 function fNoise(p) {
   let gx = (fract(p.aRand * 13.73) - 0.5) * 2 * ASPECT * 0.94;
   let gy = ANCHOR_F[1] + (fract(p.aRand2 * 7.31) - 0.5) * 1.55;
-  const tick = Math.floor(TIME * 6.0) + Math.floor(p.aRand * 4.0);
-  gx += (hash(tick + p.aRand * 91.7) - 0.5) * 0.15;
-  gy += (hash(tick + p.aRand2 * 57.3) - 0.5) * 0.15;
+  const ph = p.aRand * 6.2831 + p.aRand2 * 17.0;
+  gx += Math.sin(TIME * 9.0 + ph) * 0.018 + Math.sin(TIME * 2.3 + ph * 1.7) * 0.02;
+  gy += Math.cos(TIME * 11.0 + ph) * 0.018 + Math.cos(TIME * 2.9 + ph * 0.8) * 0.02;
   return [gx, gy];
 }
 function fSea(p) {
