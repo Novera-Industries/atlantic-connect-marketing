@@ -34,22 +34,17 @@ for (let i = 0; i < N; i++) {
   P.push({ aT: Math.random(), aBand: (Math.random() * 2 - 1) * Math.sqrt(Math.random()), aStream: i % 2 === 0 ? -1 : 1, aRand: Math.random(), aRand2: Math.random() });
 }
 
-function fWaveCrest(p) {
+function fVortex(p) {
+  const arm = Math.floor(fract(p.aRand * 5.0) * 5.0);
   const t = p.aT;
-  let x = (t - 0.5) * 2 * ASPECT * 0.82;
-  const swell = Math.pow(Math.sin(clamp01(t) * Math.PI), 1.05);
-  const lip = Math.exp(-Math.pow((t - 0.38) * 3.8, 2));
-  const crestY = swell * 0.26 + lip * 0.18 - 0.02;
-  const depth = Math.pow(p.aBand * 0.5 + 0.5, 0.8);
-  let y = crestY - depth * (0.26 + swell * 0.22);
-  const curlMask = lip * smooth(0.55, 0.0, depth);
-  const ang = depth * 9.0 + t * 5.0 - TIME * 0.25;
-  x += curlMask * Math.cos(ang) * 0.07;
-  y += curlMask * (Math.sin(ang) * 0.07 + 0.11);
-  const spray = (p.aRand >= 0.84 ? 1 : 0) * swell;
-  y += spray * (0.06 + p.aRand2 * 0.20);
-  x += spray * (p.aRand2 - 0.5) * 0.18;
-  return [x, y];
+  const R = 0.68 * clampN(ASPECT, 0.58, 1.42);
+  const eye = p.aRand2 >= 0.88 ? 1 : 0;
+  let r = (0.05 + Math.pow(t, 1.4) * R) * (1.0 - eye * 0.82);
+  r *= 1.0 + (hash(p.aRand * 7.31) - 0.5) * 0.18;
+  let theta = arm * 1.25664 + t * 4.6 + TIME * 0.16;
+  theta += (p.aRand2 - 0.5) * (0.14 + t * 0.62);
+  const dx = Math.cos(theta) * r, dy = Math.sin(theta) * r;
+  return [dx, dy * 0.46 - 0.18];
 }
 function fNoise(p) {
   let gx = (fract(p.aRand * 13.73) - 0.5) * 2 * ASPECT * 0.94;
@@ -59,22 +54,27 @@ function fNoise(p) {
   gy += (hash(tick + p.aRand2 * 57.3) - 0.5) * 0.15;
   return [gx, gy];
 }
-function fClientCurrent(p) {
-  const x = (p.aT - 0.5) * 2 * ASPECT * 0.95;
-  const wave = Math.sin(p.aT * 6.2831 * 1.2 - TIME * 0.3) * 0.06 + Math.sin(p.aT * 6.2831 * 0.55 + TIME * 0.12) * 0.035;
-  return [ANCHOR_C[0] + x, ANCHOR_C[1] + wave + p.aBand * 0.42];
+function fSea(p) {
+  const depth = p.aBand * 0.5 + 0.5;
+  const persp = mix(1.06, 0.30, Math.pow(depth, 0.75));
+  const x = (p.aT - 0.5) * 2 * ASPECT * persp;
+  const swell = Math.sin(p.aT * 22.0 * persp + TIME * 0.5 + depth * 9.0) + Math.sin(p.aT * 7.0 - TIME * 0.33);
+  const y = (ANCHOR_C[1] + 0.30) - Math.pow(1.0 - depth, 1.5) * 0.62 + swell * 0.5 * 0.035 * (1.0 - depth);
+  return [x, y];
 }
-function fThread(p) {
-  const yy = (p.aT - 0.5) * 1.7;
-  const wave = Math.sin(p.aT * 6.2831 * 1.1 - TIME * 0.25) * 0.05 + Math.sin(p.aT * 6.2831 * 0.5 + TIME * 0.1) * 0.03;
-  const x = ANCHOR_G[0] + wave + p.aBand * 0.34;
+function fHelix(p) {
+  const yy = (0.5 - p.aT) * 1.7;
+  const phase = p.aT * 13.8 + TIME * 0.32 + (p.aStream < 0 ? 0 : Math.PI);
+  const rad = 0.17 + (hash(p.aRand * 3.7) - 0.5) * 0.07;
+  const x = ANCHOR_G[0] + Math.cos(phase) * rad + p.aBand * 0.02;
   return [x, ANCHOR_G[1] + yy];
 }
-function fLanes(p) {
+function fStreams(p) {
   const lane = Math.floor(fract(p.aRand * 4.999) * 4) - 1.5;
-  const x = (p.aT - 0.5) * 2 * ASPECT * 0.9;
-  const wave = Math.sin(p.aT * 6.2831 * 0.9 + TIME * 0.22 + lane * 2.1) * 0.03;
-  const y = ANCHOR_H[1] + lane * 0.16 + wave + p.aBand * 0.05;
+  const t = p.aT;
+  const persp = mix(1.0, 0.24, t);
+  const x = ANCHOR_H[0] + lane * 0.46 * ASPECT * persp + p.aBand * 0.05 * persp;
+  const y = ANCHOR_H[1] - 0.30 + t * 0.58 + Math.sin(t * 12.0 - TIME * 0.4 + lane * 2.1) * 0.02 * (1.0 - t);
   return [x, y];
 }
 function fSplit(p) {
@@ -91,7 +91,7 @@ function fSplit(p) {
 function fRise(p) {
   const x = (p.aT - 0.5) * 2 * ASPECT * 0.92;
   const climb = (p.aT - 0.5) * 0.55;
-  const wave = Math.sin(p.aT * 6.2831 * 1.1 + TIME * 0.28) * 0.05;
+  const wave = Math.sin(p.aT * 6.9 + TIME * 0.28) * 0.05;
   return [ANCHOR_D[0] + x, ANCHOR_D[1] + climb + wave + p.aBand * 0.30];
 }
 function fSettle(p) {
@@ -103,7 +103,7 @@ function fSettle(p) {
 // position + phase tag — mirrors the stage blend in the shader's main()
 function pos(p, stage) {
   const s = clampN(stage + (p.aRand - 0.5) * 0.16, 0, 7);
-  const F = [fWaveCrest(p), fNoise(p), fClientCurrent(p), fThread(p), fLanes(p), fSplit(p), fRise(p), fSettle(p)];
+  const F = [fVortex(p), fNoise(p), fSea(p), fHelix(p), fStreams(p), fSplit(p), fRise(p), fSettle(p)];
   const TAG = ["merged", "noise", "cool", "thread", "cool", "split", "warm", "chrome"];
   let i, k;
   if (s < 1) { i = 0; k = smooth(0, 1, s); }
@@ -148,11 +148,11 @@ function panel(stage, label, anchors) {
 }
 
 const states = [
-  ["stage 0  WAVE (hero) — the logo ocean wave", 0, []],
+  ["stage 0  VORTEX (hero) — the whirlpool, arms into a luminous eye", 0, []],
   ["stage 1  STATIC (tension) — cold digital noise", 1, ["F"]],
-  ["stage 2  cool current FLOWS past the CENTRED photo (the turn)", 2, ["C"]],
-  ["stage 3  vertical THREAD down the process timeline", 3, ["G"]],
-  ["stage 4  FOUR LANES across the coverage block", 4, ["H"]],
+  ["stage 2  THE SEA — perspective dot-ocean around the photo (the turn)", 2, ["C"]],
+  ["stage 3  HELIX — double spiral down the process timeline", 3, ["G"]],
+  ["stage 4  FOUR STREAMS to the vanishing point (coverage)", 4, ["H"]],
   ["stage 5  split → Partner / Careers cards (the fork)", 5, ["A", "B"]],
   ["stage 6  warm RISE across the ladder (the climb)", 6, ["D"]],
   ["stage 7  settle — current full circle (culture close)", 7, ["E"]],

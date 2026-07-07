@@ -4,6 +4,49 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 14 — reference-tier particle redesign: THE VORTEX (2026-07-07)
+
+User re-sent the textura.eu/HELIOS reference video (same file as iteration 2;
+frames re-extracted and studied at crop level) and asked for the dot animation
+to be redesigned "more impressive" + the site to be perfect on mobile. What the
+reference actually is: (1) hero = a rotating 3D SPIRAL GALAXY (arms + luminous
+core), (2) a perspective dot-ocean receding to a horizon, (3) depth everywhere
+(many tiny dim dots + few bright carriers, near=big/bright far=small/faint),
+(4) mostly white/silver particles. THIS RESOLVES THE LONG-OPEN "WAVE" QUESTION:
+the hero is now `fVortex` — an ocean whirlpool (the ocean's galaxy, echoes the
+logo curl): 5 log-spiral arms, 12% of particles in a tight luminous EYE, slow
+uTime rotation, disk tilted (y*0.46), centre at (0,-0.18) so the eye sits BELOW
+the headline like the reference. fWaveCrest/fClientCurrent/fTalentCurrent/
+fThread/fLanes were REMOVED (replaced), git history has them.
+
+New formation set (stages unchanged 0..7): 0 fVortex · 1 fNoise (kept) ·
+2 fSea (perspective dot-ocean: rows compress toward a horizon at client-photo
+level, near rows swell) · 3 fHelix (double spiral down the pinned timeline,
+aStream = front/back strand) · 4 fStreams (four channel lanes converging to a
+vanishing point) · 5 fSplit (kept) · 6 fRise (kept) · 7 fSettle/fTwist (kept).
+
+Global depth pass (the volume illusion): every formation returns pos.z in
+[-1,1] (larger = farther); main() computes dSize (1.3→0.55) and dAlpha
+(1.1→0.5) from it; gl_Position now uses z=0 (depth is shading-only). Size field
+is reference-tier: `0.9 + pow(aRand2,2)*3.6` (many fine dots, few bright).
+`coreBoost` makes particles near the eye glow + grow (gated to uStage<1);
+`heroLift` (+0.3 alpha, same gate) makes the vortex denser than the travelling
+stages. Hero colour now silverier: cMerged = mix(cool, chrome, 0.45+0.35*hash).
+Tunables if the user wants adjustments: R multiplier 0.68 (disk size), 0.46
+(tilt), -0.18 (eye y), 0.16 (rotation speed), heroLift 0.3, coreBoost radius
+0.30/0.04.
+
+Verified: plot-global.mjs mirrors all new math (geometry confirmed: real spiral
++ sea + helix + streams); typecheck/build green; LIVE first-frame screenshots on
+a real-viewport preview show the vortex rendering on desktop (~60% width, core
+under the headline) AND mobile 375px (arms span ~85% width below the headline —
+the reference's phone framing). Mobile structure re-verified: no overflow-x, no
+pin on mobile, stacked steps opacity 1. NOT verifiable here (throttled hidden
+tab): the rotation, morphs, and scrub feel — user's real browser is the judge.
+NOTE: a stale dev server threw `TypeError: a[d] is not a function` on / after
+the shader HMR — fixed by stopping the server, `rm -rf .next/cache`, fresh
+start. Do that first if the page 500s in dev.
+
 ## Iteration 13 — the 8-act storytelling restructure (2026-07-07)
 
 User approved a full homepage redesign brief (plan file: humming-nibbling-tome.md;

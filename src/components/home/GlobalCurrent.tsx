@@ -38,26 +38,28 @@ const VERT = /* glsl */ `
   float hash(float n){ return fract(sin(n) * 43758.5453); }
 
   // ---- formations -------------------------------------------------
-  // Hero rest state: an ocean-wave crest echoing the logo mark (a swell that
-  // rises, breaks into a curl, and throws light spray) — not a circular blob.
-  // Hero wave (reverted from the barrel attempt): a swelling crest with a body of
-  // water below and light spray. Reads as a wave-ish swell behind the headline.
-  vec3 fWaveCrest() {
-    float t = aT;
-    float x = (t - 0.5) * 2.0 * uAspect * 0.82;          // sweep across, centred
-    float swell = pow(sin(clamp(t, 0.0, 1.0) * 3.14159), 1.05);
-    float lip = exp(-pow((t - 0.38) * 3.8, 2.0));        // breaking-lip bump
-    float crestY = swell * 0.26 + lip * 0.18 - 0.02;
-    float depth = pow(aBand * 0.5 + 0.5, 0.8);           // 0 at crest .. 1 deep
-    float y = crestY - depth * (0.26 + swell * 0.22);    // body hangs below the crest
-    float curlMask = lip * smoothstep(0.55, 0.0, depth);
-    float ang = depth * 9.0 + t * 5.0 - uTime * 0.25;
-    x += curlMask * cos(ang) * 0.07;
-    y += curlMask * (sin(ang) * 0.07 + 0.11);
-    float spray = step(0.84, aRand) * swell;
-    y += spray * (0.06 + aRand2 * 0.20);
-    x += spray * (aRand2 - 0.5) * 0.18;
-    return vec3(x, y, aBand * 0.4);
+  // Depth convention (the textura-reference upgrade): every formation returns
+  // pos.z in roughly [-1, 1] where LARGER z = farther away. main() shrinks and
+  // dims far particles, so each formation reads as a rotating/receding VOLUME,
+  // not a flat sheet.
+
+  // Hero: THE VORTEX — the current as a slow ocean whirlpool seen from above
+  // at a tilt (the reference's spiral galaxy, made of water; echoes the logo's
+  // circular curl). Five arms wind into a dense luminous eye; the whole disk
+  // slowly rotates and the arms blur outward into spray.
+  vec3 fVortex() {
+    float arm = floor(fract(aRand * 5.0) * 5.0);          // which spiral arm
+    float t = aT;                                          // 0 eye .. 1 rim
+    float R = 0.68 * clamp(uAspect, 0.58, 1.42);           // disk fits any viewport
+    float eye = step(0.88, aRand2);                        // 12% live in the eye
+    float r = (0.05 + pow(t, 1.4) * R) * (1.0 - eye * 0.82);
+    r *= 1.0 + (hash(aRand * 7.31) - 0.5) * 0.18;
+    float theta = arm * 1.25664 + t * 4.6 + uTime * 0.16;  // winding + slow rotation
+    theta += (aRand2 - 0.5) * (0.14 + t * 0.62);           // arms blur outward
+    vec2 disk = vec2(cos(theta), sin(theta)) * r;
+    float depth = disk.y / max(R, 0.001);                  // far side of the tilt
+    // eye sits BELOW the headline (reference framing), not behind it
+    return vec3(disk.x, disk.y * 0.46 - 0.18, depth);
   }
   // Tension: the one moment the Current is NOT water — cold digital STATIC.
   // A loose full-width field of points that snap position in hard clocked steps
@@ -70,26 +72,41 @@ const VERT = /* glsl */ `
     float tick = floor(uTime * 6.0) + floor(aRand * 4.0);
     gx += (hash(tick + aRand * 91.7) - 0.5) * 0.15;
     gy += (hash(tick + aRand2 * 57.3) - 0.5) * 0.15;
-    return vec3(gx, gy, aBand * 0.4);
+    return vec3(gx, gy, (aRand2 * 2.0 - 1.0));
   }
-  // Process: the current turns VERTICAL and threads down the pinned timeline —
-  // order emerging from the noise, one continuous stream through the four steps.
-  vec3 fThread() {
+  // Client: THE SEA — a perspective dot-ocean receding to a horizon just above
+  // the photo. Near rows are wide and swell; far rows compress toward the
+  // horizon. The opaque photo sits IN the water (masks the middle).
+  vec3 fSea() {
+    vec2 c = uAnchorC;
+    float depth = aBand * 0.5 + 0.5;                       // 0 near .. 1 horizon
+    float persp = mix(1.06, 0.30, pow(depth, 0.75));
+    float x = (aT - 0.5) * 2.0 * uAspect * persp;
+    float swell = sin(aT * 22.0 * persp + uTime * 0.5 + depth * 9.0)
+                + sin(aT * 7.0 - uTime * 0.33);
+    float y = (c.y + 0.30) - pow(1.0 - depth, 1.5) * 0.62 + swell * 0.5 * 0.035 * (1.0 - depth);
+    return vec3(x, y, depth * 2.0 - 1.0);
+  }
+  // Process: THE HELIX — the current threads down the pinned timeline as a slow
+  // double spiral (front and back strands), order made visible.
+  vec3 fHelix() {
     vec2 g = uAnchorG;
-    float yy = (aT - 0.5) * 1.7;
-    float wave = sin(aT * 6.2831 * 1.1 - uTime * 0.25) * 0.05 + sin(aT * 6.2831 * 0.5 + uTime * 0.1) * 0.03;
-    float x = g.x + wave + aBand * 0.34;
-    return vec3(x, g.y + yy, aBand * 0.4);
+    float yy = (0.5 - aT) * 1.7;
+    float phase = aT * 13.8 + uTime * 0.32 + (aStream < 0.0 ? 0.0 : 3.14159);
+    float rad = 0.17 + (hash(aRand * 3.7) - 0.5) * 0.07;
+    float x = g.x + cos(phase) * rad + aBand * 0.02;
+    return vec3(x, g.y + yy, sin(phase));
   }
-  // Coverage: the one current fans into FOUR parallel lanes — one per in-person
-  // channel (residential / retail / B2B / events) — flowing across the block.
-  vec3 fLanes() {
+  // Coverage: FOUR STREAMS — the four in-person channels as lanes receding
+  // toward a shared vanishing point (a fleet heading out).
+  vec3 fStreams() {
     vec2 h = uAnchorH;
     float lane = floor(fract(aRand * 4.999) * 4.0) - 1.5;
-    float x = (aT - 0.5) * 2.0 * uAspect * 0.9;
-    float wave = sin(aT * 6.2831 * 0.9 + uTime * 0.22 + lane * 2.1) * 0.03;
-    float y = h.y + lane * 0.16 + wave + aBand * 0.05;
-    return vec3(x, y, aBand * 0.3);
+    float t = aT;                                          // 0 near .. 1 far
+    float persp = mix(1.0, 0.24, t);
+    float x = h.x + lane * 0.46 * uAspect * persp + aBand * 0.05 * persp;
+    float y = h.y - 0.30 + t * 0.58 + sin(t * 12.0 - uTime * 0.4 + lane * 2.1) * 0.02 * (1.0 - t);
+    return vec3(x, y, t * 2.0 - 1.0);
   }
   // Talent: the warm current RISES across the ladder — low on the left, high on
   // the right — the climb made literal.
@@ -97,9 +114,9 @@ const VERT = /* glsl */ `
     vec2 d = uAnchorD;
     float x = (aT - 0.5) * 2.0 * uAspect * 0.92;
     float climb = (aT - 0.5) * 0.55;
-    float wave = sin(aT * 6.2831 * 1.1 + uTime * 0.28) * 0.05;
+    float wave = sin(aT * 6.9 + uTime * 0.28) * 0.05;
     float y = d.y + climb + wave + aBand * 0.30;
-    return vec3(x, y, aBand * 0.4);
+    return vec3(x, y, aBand);
   }
   // Fork: ONE current at the top splits into two clean ribbons that flow into the
   // Partner / Careers cards (anchors). Tight bands, not scattered dust.
@@ -114,25 +131,6 @@ const VERT = /* glsl */ `
     vec2 perp = vec2(-dir.y, dir.x);
     base += perp * aBand * 0.04;                           // thin ribbon (was scattered)
     return vec3(base, aBand * 0.3);
-  }
-  // Client: the current FLOWS past the centred photo as a horizontal wave at the
-  // photo's level — the photo sits in the stream (its opaque box masks the middle,
-  // so the water reads as flowing around it). A ring read as a hollow "C"; this
-  // keeps it part of the one continuous current. Cool.
-  vec3 fClientCurrent() {
-    vec2 c = uAnchorC;
-    float x = (aT - 0.5) * 2.0 * uAspect * 0.95;
-    float wave = sin(aT * 6.2831 * 1.2 - uTime * 0.3) * 0.06 + sin(aT * 6.2831 * 0.55 + uTime * 0.12) * 0.035;
-    float y = c.y + wave + aBand * 0.42;
-    return vec3(x, y, aBand * 0.4);
-  }
-  // Talent: the same current, warm, flowing through the talent section.
-  vec3 fTalentCurrent() {
-    vec2 d = uAnchorD;
-    float x = (aT - 0.5) * 2.0 * uAspect * 0.95;
-    float wave = sin(aT * 6.2831 * 1.1 + uTime * 0.28) * 0.06 + sin(aT * 6.2831 * 0.6 - uTime * 0.1) * 0.035;
-    float y = d.y + wave + aBand * 0.42;
-    return vec3(x, y, aBand * 0.4);
   }
   // Trust: the current settles into ONE calm, wide wave above the strip (anchor E).
   vec3 fSettle() {
@@ -167,16 +165,16 @@ const VERT = /* glsl */ `
     float stagger = 0.16 + smoothstep(1.6, 2.2, uStage) * transFlow * 0.62;
     float s = clamp(uStage + (aRand - 0.5) * stagger, 0.0, 7.0);
 
-    vec3 P0 = fWaveCrest();     // hero     — the wave
+    vec3 P0 = fVortex();        // hero     — the whirlpool
     vec3 P1 = fNoise();         // tension  — cold digital static
-    vec3 P2 = fClientCurrent(); // client   — the current flows past the photo (the turn)
-    vec3 P3 = fThread();        // process  — vertical thread down the timeline
-    vec3 P4 = fLanes();         // coverage — four channel lanes
+    vec3 P2 = fSea();           // client   — perspective dot-ocean around the photo (the turn)
+    vec3 P3 = fHelix();         // process  — double spiral down the timeline
+    vec3 P4 = fStreams();       // coverage — four lanes to the vanishing point
     vec3 P5 = fSplit();         // fork     — two streams into the Partner/Careers cards
     vec3 P6 = fRise();          // talent   — the warm climb
     vec3 P7 = mix(fSettle(), fTwist(), uTwist); // culture close — settle → blue+gold braid
 
-    vec3 cMerged = mix(uCool, uChrome, 0.25 + 0.25 * hash(aRand)); // hero wave
+    vec3 cMerged = mix(uCool, uChrome, 0.45 + 0.35 * hash(aRand)); // hero vortex (silvery, reference-white)
     vec3 cNoise  = mix(uChrome, uCool, 0.4) * 0.62;                // tension static (dim, cold)
     vec3 cCool   = mix(uCool, uChrome, 0.18);                      // client (cool)
     vec3 cThread = mix(uCool, uChrome, 0.35);                      // process (cool silver)
@@ -213,11 +211,23 @@ const VERT = /* glsl */ `
     pos.x += sin(uTime * 0.3 + aRand * 6.28) * 0.01;
     pos.y += cos(uTime * 0.27 + aRand2 * 6.28) * 0.01;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    // depth shading (the volume illusion): far particles smaller and dimmer.
+    float depth01 = clamp(pos.z, -1.0, 1.0) * 0.5 + 0.5;
+    float dSize = mix(1.3, 0.55, depth01);
+    float dAlpha = mix(1.1, 0.5, depth01);
+
+    // the vortex EYE glows: particles near the hero disk's centre get a hot core
+    // (only while the journey is at/near stage 0).
+    float coreBoost = (1.0 - smoothstep(0.4, 1.0, uStage))
+                    * smoothstep(0.30, 0.04, length(pos.xy - vec2(0.0, -0.18)));
+    col *= 1.0 + coreBoost * 1.1;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.xy, 0.0, 1.0);
 
     float twinkle = 0.7 + 0.3 * sin(uTime * 1.5 + aRand * 30.0);
-    float size = 1.6 + aRand2 * 2.4;
-    gl_PointSize = size * uPointScale * uPixelRatio * twinkle;
+    // reference-tier size field: MANY fine dots, a FEW bright carriers.
+    float size = 0.9 + pow(aRand2, 2.0) * 3.6;
+    gl_PointSize = size * dSize * (1.0 + coreBoost * 0.7) * uPointScale * uPixelRatio * twinkle;
 
     vColor = col;
     // soften the left/right edges of the band formations (the wave looked harshly
@@ -228,7 +238,9 @@ const VERT = /* glsl */ `
     float aTedge = smoothstep(0.0, 0.12, aT) * (1.0 - smoothstep(0.88, 1.0, aT));
     float edgeW = min(smoothstep(0.5, 1.0, abs(uStage - 5.0)), smoothstep(0.5, 1.0, abs(uStage - 1.0)));
     float edge = mix(1.0, aTedge, edgeW);
-    vAlpha = ((0.5 + 0.5 * sin(aT * 12.0 + uTime)) * 0.5 + 0.5) * uFade * edge;
+    // the vortex reads denser/hotter than the travelling formations (reference look)
+    float heroLift = (1.0 - smoothstep(0.4, 1.0, uStage)) * 0.3;
+    vAlpha = ((0.5 + 0.5 * sin(aT * 12.0 + uTime)) * 0.5 + 0.5) * (1.0 + heroLift) * uFade * edge * dAlpha;
   }
 `;
 
