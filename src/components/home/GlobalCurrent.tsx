@@ -157,12 +157,12 @@ const VERT = /* glsl */ `
     // Stage 0..7 is driven in JS from the live section rects, so each formation
     // is active exactly when its section is centred — the morph tracks the scroll.
     // Fluid transitions: spread each particle's transition timing so the morph
-    // FLOWS as a travelling wave of motion rather than snapping as a uniform colour
-    // shift. The spread peaks mid-transition and ramps up from the noise→client
-    // turn onward (the "static organizes into the current" moment); the hero→noise
-    // entry keeps its tight feel.
+    // FLOWS as a travelling wave of motion rather than snapping as a uniform mass.
+    // Applied to EVERY transition (recording 2 showed the vortex→static morph
+    // travelling as one dense blob): the spread peaks mid-transition and returns
+    // to tight at each integer stage, so formations dissolve and re-form in waves.
     float transFlow = sin(fract(uStage) * 3.14159);
-    float stagger = 0.16 + smoothstep(1.6, 2.2, uStage) * transFlow * 0.62;
+    float stagger = 0.16 + smoothstep(0.25, 0.75, uStage) * transFlow * 0.62;
     float s = clamp(uStage + (aRand - 0.5) * stagger, 0.0, 7.0);
 
     vec3 P0 = fVortex();        // hero     — the whirlpool

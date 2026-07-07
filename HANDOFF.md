@@ -4,6 +4,18 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 16 — dissolution morphs (recording 3, 2026-07-07)
+
+Recording 3 (7.34.56 PM): radiance FIXED — vortex strong, static visible, helix
+clearly reads behind the timeline, count-ups + fork split + ladder + culture all
+verified live. One defect left: the vortex→static morph travelled as one dense
+BLOB (all particles on the same clock, the eye smearing across mid-transition).
+FIX: the travelling-wave stagger now applies to EVERY transition — gate changed
+from `smoothstep(1.6, 2.2, uStage)` to `smoothstep(0.25, 0.75, uStage)` — so
+formations dissolve and re-form in waves (tight again at each integer stage).
+Verified: clean build + fresh-server hero frame. The morph feel needs the next
+user recording. Remaining tunables unchanged (HANDOFF iter 14 list).
+
 ## Iteration 15 — radiance pass from the user's live recording (2026-07-07)
 
 User recorded the real scroll (Downloads/Screen Recording 2026-07-07 at 7.23.31 PM
