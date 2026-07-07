@@ -2,8 +2,7 @@ import { Container, Section, Eyebrow } from "@/components/layout/Container";
 import { SplitReveal } from "@/components/motion/SplitReveal";
 import { Reveal } from "@/components/motion/Reveal";
 import { MediaFrame } from "@/components/media/MediaFrame";
-import { CountUp } from "@/components/motion/CountUp";
-import { Button } from "@/components/ui/Button";
+import { Button, ProofCTA } from "@/components/ui/Button";
 import { WaveDivider } from "@/components/brand/WaveDivider";
 import { AnchorPoint } from "./AnchorPoint";
 import { home } from "@/lib/content";
@@ -46,33 +45,16 @@ export function ClientPreview() {
           </Reveal>
         </AnchorPoint>
 
-        {/* proof stats — centred row below the focal photo */}
-        <Reveal delay={0.1}>
-          <dl className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-6 border-y border-line py-7 text-center">
-            <Stat value={1} label="business day to reply" />
-            <Stat value={4} label="in-person channels" />
-            <Stat value={100} suffix="%" label="reps trained on your brand" />
-          </dl>
-        </Reveal>
-
-        <Reveal delay={0.15} className="mt-8 text-center">
-          <Button href="/partner" variant="primary" size="lg">
-            {c.cta}
-          </Button>
+        {/* stats moved to the Proof & Coverage act — this beat stays the turn */}
+        <Reveal delay={0.12} className="mt-12">
+          <ProofCTA className="items-center text-center" proof="We reply within one business day.">
+            <Button href="/partner" variant="primary" size="lg">
+              {c.cta}
+            </Button>
+          </ProofCTA>
         </Reveal>
       </Container>
       <WaveDivider className="relative z-10 mt-20 opacity-60" />
     </Section>
-  );
-}
-
-function Stat({ value, suffix, label }: { value: number; suffix?: string; label: string }) {
-  return (
-    <div>
-      <dd className="font-display text-3xl font-semibold text-chrome sm:text-4xl">
-        <CountUp value={value} suffix={suffix} />
-      </dd>
-      <dt className="mt-1.5 text-xs text-subtle">{label}</dt>
-    </div>
   );
 }

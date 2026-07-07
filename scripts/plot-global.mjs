@@ -1,8 +1,10 @@
 // Replicate GlobalCurrent's vertex formations in JS and render them as scatter
 // PNGs at each journey STAGE — verifies the choreography without a GPU (the
-// preview can't drive a fixed WebGL canvas while scrolled). The engine now
-// blends formations by an anchor-derived stage (0..4); keep these JS mirrors in
-// sync with the GLSL in GlobalCurrent.tsx.
+// preview can't drive a fixed WebGL canvas while scrolled). The engine blends
+// formations by an anchor-derived stage (0..7); keep these JS mirrors in sync
+// with the GLSL in GlobalCurrent.tsx.
+// Story: wave → static (tension) → client current → process thread → coverage
+// lanes → split (fork) → warm rise (ladder) → settle (culture close).
 import sharp from "sharp";
 import { writeFile } from "node:fs/promises";
 
@@ -12,15 +14,20 @@ const clamp01 = (x) => clampN(x, 0, 1);
 const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const mix = (a, b, t) => a + (b - a) * t;
 const norm = (x, y) => { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; };
+const fract = (x) => x - Math.floor(x);
+const hash = (n) => fract(Math.sin(n) * 43758.5453);
 
 // mock anchors in world coords, positioned as if each section were centred
 const ANCHOR_A = [-0.6, -0.3];   // Partner card
 const ANCHOR_B = [0.6, -0.3];    // Careers card
 const ANCHOR_C = [0.0, 0.0];     // Client photo (centred on screen)
-const ANCHOR_D = [0.35, 0.0];    // Talent card
-const ANCHOR_E = [0.0, -0.1];    // Trust CTA
+const ANCHOR_D = [0.0, 0.0];     // Talent ladder (centred)
+const ANCHOR_E = [0.0, -0.1];    // Culture close
+const ANCHOR_F = [0.0, 0.0];     // Tension copy (centred)
+const ANCHOR_G = [0.0, 0.0];     // Process stage (centred)
+const ANCHOR_H = [0.0, 0.0];     // Coverage block (centred)
 
-const COL = { merged: "#7fb6e6", split: null, cool: "#2E97E6", warm: "#E8C98A", chrome: "#cdd4d9" };
+const COL = { merged: "#7fb6e6", noise: "#5d707f", split: null, cool: "#2E97E6", thread: "#9db8d4", warm: "#E8C98A", chrome: "#cdd4d9" };
 
 const P = [];
 for (let i = 0; i < N; i++) {
@@ -44,6 +51,32 @@ function fWaveCrest(p) {
   x += spray * (p.aRand2 - 0.5) * 0.18;
   return [x, y];
 }
+function fNoise(p) {
+  let gx = (fract(p.aRand * 13.73) - 0.5) * 2 * ASPECT * 0.94;
+  let gy = ANCHOR_F[1] + (fract(p.aRand2 * 7.31) - 0.5) * 1.55;
+  const tick = Math.floor(TIME * 6.0) + Math.floor(p.aRand * 4.0);
+  gx += (hash(tick + p.aRand * 91.7) - 0.5) * 0.15;
+  gy += (hash(tick + p.aRand2 * 57.3) - 0.5) * 0.15;
+  return [gx, gy];
+}
+function fClientCurrent(p) {
+  const x = (p.aT - 0.5) * 2 * ASPECT * 0.95;
+  const wave = Math.sin(p.aT * 6.2831 * 1.2 - TIME * 0.3) * 0.06 + Math.sin(p.aT * 6.2831 * 0.55 + TIME * 0.12) * 0.035;
+  return [ANCHOR_C[0] + x, ANCHOR_C[1] + wave + p.aBand * 0.42];
+}
+function fThread(p) {
+  const yy = (p.aT - 0.5) * 1.7;
+  const wave = Math.sin(p.aT * 6.2831 * 1.1 - TIME * 0.25) * 0.05 + Math.sin(p.aT * 6.2831 * 0.5 + TIME * 0.1) * 0.03;
+  const x = ANCHOR_G[0] + wave + p.aBand * 0.34;
+  return [x, ANCHOR_G[1] + yy];
+}
+function fLanes(p) {
+  const lane = Math.floor(fract(p.aRand * 4.999) * 4) - 1.5;
+  const x = (p.aT - 0.5) * 2 * ASPECT * 0.9;
+  const wave = Math.sin(p.aT * 6.2831 * 0.9 + TIME * 0.22 + lane * 2.1) * 0.03;
+  const y = ANCHOR_H[1] + lane * 0.16 + wave + p.aBand * 0.05;
+  return [x, y];
+}
 function fSplit(p) {
   const side = p.aStream;
   const start = [side * 0.05, 0.46];
@@ -55,32 +88,31 @@ function fSplit(p) {
   bx += -dy * p.aBand * 0.04; by += dx * p.aBand * 0.04;
   return [bx, by];
 }
-function fClientCurrent(p) {
-  const x = (p.aT - 0.5) * 2 * ASPECT * 0.95;
-  const wave = Math.sin(p.aT * 6.2831 * 1.2 - TIME * 0.3) * 0.06 + Math.sin(p.aT * 6.2831 * 0.55 + TIME * 0.12) * 0.035;
-  return [ANCHOR_C[0] + x, ANCHOR_C[1] + wave + p.aBand * 0.42];
-}
-function fTalentCurrent(p) {
-  const x = (p.aT - 0.5) * 2 * ASPECT * 0.95;
-  const wave = Math.sin(p.aT * 6.2831 * 1.1 + TIME * 0.28) * 0.06 + Math.sin(p.aT * 6.2831 * 0.6 - TIME * 0.1) * 0.035;
-  return [ANCHOR_D[0] + x, ANCHOR_D[1] + wave + p.aBand * 0.42];
+function fRise(p) {
+  const x = (p.aT - 0.5) * 2 * ASPECT * 0.92;
+  const climb = (p.aT - 0.5) * 0.55;
+  const wave = Math.sin(p.aT * 6.2831 * 1.1 + TIME * 0.28) * 0.05;
+  return [ANCHOR_D[0] + x, ANCHOR_D[1] + climb + wave + p.aBand * 0.30];
 }
 function fSettle(p) {
   const x = (p.aT - 0.5) * 2 * ASPECT * 0.8;
   const w = Math.sin(p.aT * 6.2831 - TIME * 0.18) * 0.05 + 0.3 * Math.sin(p.aT * 6.2831 * 0.5) * 0.05;
-  return [ANCHOR_E[0] + x, ANCHOR_E[1] + 0.34 + w + p.aBand * 0.07];
+  return [ANCHOR_E[0] + x, ANCHOR_E[1] - 0.42 + w + p.aBand * 0.07];
 }
 
 // position + phase tag — mirrors the stage blend in the shader's main()
 function pos(p, stage) {
-  const s = clampN(stage + (p.aRand - 0.5) * 0.16, 0, 4);
-  const F = [fWaveCrest(p), fSplit(p), fClientCurrent(p), fTalentCurrent(p), fSettle(p)];
-  const TAG = ["merged", "split", "cool", "warm", "chrome"];
+  const s = clampN(stage + (p.aRand - 0.5) * 0.16, 0, 7);
+  const F = [fWaveCrest(p), fNoise(p), fClientCurrent(p), fThread(p), fLanes(p), fSplit(p), fRise(p), fSettle(p)];
+  const TAG = ["merged", "noise", "cool", "thread", "cool", "split", "warm", "chrome"];
   let i, k;
   if (s < 1) { i = 0; k = smooth(0, 1, s); }
   else if (s < 2) { i = 1; k = smooth(0, 1, s - 1); }
   else if (s < 3) { i = 2; k = smooth(0, 1, s - 2); }
-  else { i = 3; k = smooth(0, 1, clampN(s - 3, 0, 1)); }
+  else if (s < 4) { i = 3; k = smooth(0, 1, s - 3); }
+  else if (s < 5) { i = 4; k = smooth(0, 1, s - 4); }
+  else if (s < 6) { i = 5; k = smooth(0, 1, s - 5); }
+  else { i = 6; k = smooth(0, 1, clampN(s - 6, 0, 1)); }
   const a = F[i], b = F[i + 1];
   return [mix(a[0], b[0], k), mix(a[1], b[1], k), k < 0.5 ? TAG[i] : TAG[i + 1]];
 }
@@ -89,7 +121,11 @@ const W = 760, H = 440;
 const XMIN = -ASPECT, XMAX = ASPECT, YMIN = -1, YMAX = 1;
 const mapX = (x) => ((x - XMIN) / (XMAX - XMIN)) * W;
 const mapY = (y) => H - ((y - YMIN) / (YMAX - YMIN)) * H;
-const ANCH = { A: [...ANCHOR_A, "#2E97E6"], B: [...ANCHOR_B, "#E8C98A"], C: [...ANCHOR_C, "#2E97E6"], D: [...ANCHOR_D, "#E8C98A"], E: [...ANCHOR_E, "#cdd4d9"] };
+const ANCH = {
+  A: [...ANCHOR_A, "#2E97E6"], B: [...ANCHOR_B, "#E8C98A"], C: [...ANCHOR_C, "#2E97E6"],
+  D: [...ANCHOR_D, "#E8C98A"], E: [...ANCHOR_E, "#cdd4d9"], F: [...ANCHOR_F, "#5d707f"],
+  G: [...ANCHOR_G, "#9db8d4"], H: [...ANCHOR_H, "#2E97E6"],
+};
 
 function panel(stage, label, anchors) {
   let circles = "";
@@ -113,10 +149,13 @@ function panel(stage, label, anchors) {
 
 const states = [
   ["stage 0  WAVE (hero) — the logo ocean wave", 0, []],
-  ["stage 1  split → Partner / Careers cards", 1, ["A", "B"]],
-  ["stage 2  cool current FLOWS past the CENTRED photo", 2, ["C"]],
-  ["stage 3  warm current flows through Talent", 3, ["D"]],
-  ["stage 4  settle — current full circle (Trust CTA)", 4, ["E"]],
+  ["stage 1  STATIC (tension) — cold digital noise", 1, ["F"]],
+  ["stage 2  cool current FLOWS past the CENTRED photo (the turn)", 2, ["C"]],
+  ["stage 3  vertical THREAD down the process timeline", 3, ["G"]],
+  ["stage 4  FOUR LANES across the coverage block", 4, ["H"]],
+  ["stage 5  split → Partner / Careers cards (the fork)", 5, ["A", "B"]],
+  ["stage 6  warm RISE across the ladder (the climb)", 6, ["D"]],
+  ["stage 7  settle — current full circle (culture close)", 7, ["E"]],
 ];
 const bufs = await Promise.all(states.map(([l, st, a]) => sharp(Buffer.from(panel(st, l, a))).png().toBuffer()));
 const out = await sharp({ create: { width: W, height: (H + 4) * states.length, channels: 4, background: { r: 6, g: 17, b: 30, alpha: 1 } } })

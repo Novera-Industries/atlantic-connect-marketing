@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ElementType, type ReactNode } from "react";
 import { useBlockAnchor, type AnchorName } from "./anchors";
 
 /**
@@ -14,15 +14,19 @@ export function AnchorPoint({
   name,
   className,
   children,
+  as: Tag = "div",
+  id,
 }: {
   name: AnchorName;
   className?: string;
   children: ReactNode;
+  as?: ElementType;
+  id?: string;
 }) {
   const ref = useBlockAnchor(name);
   return (
-    <div ref={ref} className={className}>
+    <Tag ref={ref} id={id} className={className}>
       {children}
-    </div>
+    </Tag>
   );
 }

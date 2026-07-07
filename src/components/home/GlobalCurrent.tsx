@@ -14,7 +14,7 @@ const VERT = /* glsl */ `
   attribute float aRand2;
 
   uniform float uTime;
-  uniform float uStage;     // 0..4 journey position, driven by live anchor rects
+  uniform float uStage;     // 0..7 journey position, driven by live anchor rects
   uniform float uFade;      // 1 = visible, 0 = hidden (drops to 0 behind the footer)
   uniform float uTwist;     // 0 = white settle, 1 = blue+gold braid (ramps near the footer)
   uniform float uAspect;
@@ -23,11 +23,14 @@ const VERT = /* glsl */ `
   uniform vec3  uCool;
   uniform vec3  uWarm;
   uniform vec3  uChrome;
-  uniform vec2  uAnchorA;   // Partner card (world coords)
-  uniform vec2  uAnchorB;   // Careers card (world coords)
+  uniform vec2  uAnchorA;   // Partner card   (world coords)
+  uniform vec2  uAnchorB;   // Careers card   (world coords)
   uniform vec2  uAnchorC;   // Client media   (world coords)
-  uniform vec2  uAnchorD;   // Talent card    (world coords)
-  uniform vec2  uAnchorE;   // Trust CTA      (world coords)
+  uniform vec2  uAnchorD;   // Talent ladder  (world coords)
+  uniform vec2  uAnchorE;   // Culture close  (world coords)
+  uniform vec2  uAnchorF;   // Tension copy   (world coords)
+  uniform vec2  uAnchorG;   // Process stage  (world coords)
+  uniform vec2  uAnchorH;   // Coverage block (world coords)
 
   varying vec3  vColor;
   varying float vAlpha;
@@ -54,6 +57,48 @@ const VERT = /* glsl */ `
     float spray = step(0.84, aRand) * swell;
     y += spray * (0.06 + aRand2 * 0.20);
     x += spray * (aRand2 - 0.5) * 0.18;
+    return vec3(x, y, aBand * 0.4);
+  }
+  // Tension: the one moment the Current is NOT water — cold digital STATIC.
+  // A loose full-width field of points that snap position in hard clocked steps
+  // (screen noise, staccato) around the tension copy. Resolves back into the
+  // flowing current at the next stage — chaos organizing into connection.
+  vec3 fNoise() {
+    vec2 f = uAnchorF;
+    float gx = (fract(aRand * 13.73) - 0.5) * 2.0 * uAspect * 0.94;
+    float gy = f.y + (fract(aRand2 * 7.31) - 0.5) * 1.55;
+    float tick = floor(uTime * 6.0) + floor(aRand * 4.0);
+    gx += (hash(tick + aRand * 91.7) - 0.5) * 0.15;
+    gy += (hash(tick + aRand2 * 57.3) - 0.5) * 0.15;
+    return vec3(gx, gy, aBand * 0.4);
+  }
+  // Process: the current turns VERTICAL and threads down the pinned timeline —
+  // order emerging from the noise, one continuous stream through the four steps.
+  vec3 fThread() {
+    vec2 g = uAnchorG;
+    float yy = (aT - 0.5) * 1.7;
+    float wave = sin(aT * 6.2831 * 1.1 - uTime * 0.25) * 0.05 + sin(aT * 6.2831 * 0.5 + uTime * 0.1) * 0.03;
+    float x = g.x + wave + aBand * 0.34;
+    return vec3(x, g.y + yy, aBand * 0.4);
+  }
+  // Coverage: the one current fans into FOUR parallel lanes — one per in-person
+  // channel (residential / retail / B2B / events) — flowing across the block.
+  vec3 fLanes() {
+    vec2 h = uAnchorH;
+    float lane = floor(fract(aRand * 4.999) * 4.0) - 1.5;
+    float x = (aT - 0.5) * 2.0 * uAspect * 0.9;
+    float wave = sin(aT * 6.2831 * 0.9 + uTime * 0.22 + lane * 2.1) * 0.03;
+    float y = h.y + lane * 0.16 + wave + aBand * 0.05;
+    return vec3(x, y, aBand * 0.3);
+  }
+  // Talent: the warm current RISES across the ladder — low on the left, high on
+  // the right — the climb made literal.
+  vec3 fRise() {
+    vec2 d = uAnchorD;
+    float x = (aT - 0.5) * 2.0 * uAspect * 0.92;
+    float climb = (aT - 0.5) * 0.55;
+    float wave = sin(aT * 6.2831 * 1.1 + uTime * 0.28) * 0.05;
+    float y = d.y + climb + wave + aBand * 0.30;
     return vec3(x, y, aBand * 0.4);
   }
   // Fork: ONE current at the top splits into two clean ribbons that flow into the
@@ -111,42 +156,57 @@ const VERT = /* glsl */ `
   }
 
   void main() {
-    // Stage 0..4 is driven in JS from the live section rects, so each formation
+    // Stage 0..7 is driven in JS from the live section rects, so each formation
     // is active exactly when its section is centred — the morph tracks the scroll.
     // Fluid transitions: spread each particle's transition timing so the morph
     // FLOWS as a travelling wave of motion rather than snapping as a uniform colour
-    // shift. The spread peaks mid-transition and only ramps up in the lower sections
-    // (client→talent→trust); hero/split/client-entry keep their tight, liked feel.
+    // shift. The spread peaks mid-transition and ramps up from the noise→client
+    // turn onward (the "static organizes into the current" moment); the hero→noise
+    // entry keeps its tight feel.
     float transFlow = sin(fract(uStage) * 3.14159);
     float stagger = 0.16 + smoothstep(1.6, 2.2, uStage) * transFlow * 0.62;
-    float s = clamp(uStage + (aRand - 0.5) * stagger, 0.0, 4.0);
+    float s = clamp(uStage + (aRand - 0.5) * stagger, 0.0, 7.0);
 
-    vec3 P0 = fWaveCrest();   // hero   — the wave
-    vec3 P1 = fSplit();       // fork   — two streams into the Partner/Careers cards
-    vec3 P2 = fClientCurrent(); // client — current flows past the centred photo
-    vec3 P3 = fTalentCurrent(); // talent — warm current flows through
-    vec3 P4 = mix(fSettle(), fTwist(), uTwist); // trust — white settle → blue+gold braid
+    vec3 P0 = fWaveCrest();     // hero     — the wave
+    vec3 P1 = fNoise();         // tension  — cold digital static
+    vec3 P2 = fClientCurrent(); // client   — the current flows past the photo (the turn)
+    vec3 P3 = fThread();        // process  — vertical thread down the timeline
+    vec3 P4 = fLanes();         // coverage — four channel lanes
+    vec3 P5 = fSplit();         // fork     — two streams into the Partner/Careers cards
+    vec3 P6 = fRise();          // talent   — the warm climb
+    vec3 P7 = mix(fSettle(), fTwist(), uTwist); // culture close — settle → blue+gold braid
 
     vec3 cMerged = mix(uCool, uChrome, 0.25 + 0.25 * hash(aRand)); // hero wave
-    vec3 cSplit  = (aStream < 0.0) ? uCool : uWarm;                // partner / careers
+    vec3 cNoise  = mix(uChrome, uCool, 0.4) * 0.62;                // tension static (dim, cold)
     vec3 cCool   = mix(uCool, uChrome, 0.18);                      // client (cool)
+    vec3 cThread = mix(uCool, uChrome, 0.35);                      // process (cool silver)
+    vec3 cSplit  = (aStream < 0.0) ? uCool : uWarm;                // partner / careers
     vec3 cWarm   = uWarm;                                          // talent (warm)
-    vec3 cChrome = uChrome;                                        // trust settle (silver/white)
+    vec3 cChrome = uChrome;                                        // settle (silver/white)
     vec3 cEnd    = mix(cChrome, cSplit, uTwist);                   // → blue/gold braid strands
 
     vec3 pos; vec3 col;
     if (s < 1.0) {
       float k = smoothstep(0.0, 1.0, s);
-      pos = mix(P0, P1, k); col = mix(cMerged, cSplit, k);
+      pos = mix(P0, P1, k); col = mix(cMerged, cNoise, k);
     } else if (s < 2.0) {
       float k = smoothstep(0.0, 1.0, s - 1.0);
-      pos = mix(P1, P2, k); col = mix(cSplit, cCool, k);
+      pos = mix(P1, P2, k); col = mix(cNoise, cCool, k);
     } else if (s < 3.0) {
       float k = smoothstep(0.0, 1.0, s - 2.0);
-      pos = mix(P2, P3, k); col = mix(cCool, cWarm, k);
+      pos = mix(P2, P3, k); col = mix(cCool, cThread, k);
+    } else if (s < 4.0) {
+      float k = smoothstep(0.0, 1.0, s - 3.0);
+      pos = mix(P3, P4, k); col = mix(cThread, cCool, k);
+    } else if (s < 5.0) {
+      float k = smoothstep(0.0, 1.0, s - 4.0);
+      pos = mix(P4, P5, k); col = mix(cCool, cSplit, k);
+    } else if (s < 6.0) {
+      float k = smoothstep(0.0, 1.0, s - 5.0);
+      pos = mix(P5, P6, k); col = mix(cSplit, cWarm, k);
     } else {
-      float k = smoothstep(0.0, 1.0, clamp(s - 3.0, 0.0, 1.0));
-      pos = mix(P3, P4, k); col = mix(cWarm, cEnd, k);
+      float k = smoothstep(0.0, 1.0, clamp(s - 6.0, 0.0, 1.0));
+      pos = mix(P6, P7, k); col = mix(cWarm, cEnd, k);
     }
 
     // living drift
@@ -162,9 +222,12 @@ const VERT = /* glsl */ `
     vColor = col;
     // soften the left/right edges of the band formations (the wave looked harshly
     // cut off at the sides). aT runs along the width, so fade the outer ~12%.
-    // Protected near the split (stage 1) so the streams still land hard in the cards.
+    // Protected near the split (stage 5, streams must land hard in the cards) and
+    // near the static (stage 1, where aT is not an x-position so the fade would
+    // just dim a random subset of the noise).
     float aTedge = smoothstep(0.0, 0.12, aT) * (1.0 - smoothstep(0.88, 1.0, aT));
-    float edge = mix(1.0, aTedge, smoothstep(0.5, 1.0, abs(uStage - 1.0)));
+    float edgeW = min(smoothstep(0.5, 1.0, abs(uStage - 5.0)), smoothstep(0.5, 1.0, abs(uStage - 1.0)));
+    float edge = mix(1.0, aTedge, edgeW);
     vAlpha = ((0.5 + 0.5 * sin(aT * 12.0 + uTime)) * 0.5 + 0.5) * uFade * edge;
   }
 `;
@@ -187,7 +250,7 @@ const FRAG = /* glsl */ `
 
 export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null> }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  // stage 0..4 along the journey, smoothed; computed each frame from section rects
+  // stage 0..7 along the journey, smoothed; computed each frame from section rects
   const stage = useRef(0);
 
   useEffect(() => {
@@ -257,9 +320,12 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       uChrome: { value: new THREE.Color(0.78, 0.86, 0.96) },
       uAnchorA: { value: new THREE.Vector2(-0.9, -0.55) },
       uAnchorB: { value: new THREE.Vector2(0.9, -0.55) },
-      uAnchorC: { value: new THREE.Vector2(0.35, 0.0) },   // client media (right col)
-      uAnchorD: { value: new THREE.Vector2(0.4, -0.1) },   // talent card (right col)
-      uAnchorE: { value: new THREE.Vector2(0.0, -0.35) },  // trust CTA (centred)
+      uAnchorC: { value: new THREE.Vector2(0.35, 0.0) },   // client media (centred)
+      uAnchorD: { value: new THREE.Vector2(0.0, -0.1) },   // talent ladder (centred)
+      uAnchorE: { value: new THREE.Vector2(0.0, -0.35) },  // culture close (centred)
+      uAnchorF: { value: new THREE.Vector2(0.0, 0.0) },    // tension copy (centred)
+      uAnchorG: { value: new THREE.Vector2(0.0, 0.0) },    // process stage (centred)
+      uAnchorH: { value: new THREE.Vector2(0.0, 0.0) },    // coverage block (centred)
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -300,9 +366,11 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       out.set(ndcX * aspect, ndcY);
     };
 
-    // Journey stage 0..4 from where each section sits on screen. Waypoints are the
+    // Journey stage 0..7 from where each section sits on screen. Waypoints are the
     // scroll positions at which each section centres in the viewport, so stage (and
     // thus the formation) tracks the actual content rather than a guessed scroll-%.
+    // Story order: hero → tension(noise) → client → process → coverage → fork →
+    // talent(ladder) → culture(trust anchor).
     const docCenter = (name: AnchorName) => {
       const r = getAnchorRect(name);
       return r ? window.scrollY + r.top + r.height / 2 : null;
@@ -313,7 +381,16 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       const fp = docCenter("partner");
       const fc = docCenter("careers");
       const fork = fp != null && fc != null ? (fp + fc) / 2 : fp ?? fc;
-      const raw = [0, fork, docCenter("client"), docCenter("talent"), docCenter("trust")];
+      const raw = [
+        0,
+        docCenter("noise"),
+        docCenter("client"),
+        docCenter("process"),
+        docCenter("coverage"),
+        fork,
+        docCenter("talent"),
+        docCenter("trust"),
+      ];
       const maxScroll = Math.max(1, (document.documentElement.scrollHeight || vh) - vh);
       const wp: number[] = [];
       for (let i = 0; i < raw.length; i++) {
@@ -325,7 +402,7 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       for (let i = 0; i < wp.length - 1; i++) {
         if (sy < wp[i + 1]) return i + (sy - wp[i]) / (wp[i + 1] - wp[i]);
       }
-      return 4;
+      return raw.length - 1;
     };
 
     // Fade the current out once you reach the bottom so it hides behind the footer
@@ -346,7 +423,10 @@ export function GlobalCurrent(_props: { targetRef: RefObject<HTMLElement | null>
       anchorWorld("client", uniforms.uAnchorC.value, true);
       anchorWorld("talent", uniforms.uAnchorD.value, true);
       anchorWorld("trust", uniforms.uAnchorE.value, true);
-      // __forceStage: optional dev override (0..4) to inspect any formation.
+      anchorWorld("noise", uniforms.uAnchorF.value, true);
+      anchorWorld("process", uniforms.uAnchorG.value, true);
+      anchorWorld("coverage", uniforms.uAnchorH.value, true);
+      // __forceStage: optional dev override (0..7) to inspect any formation.
       const forced = (window as unknown as { __forceStage?: number }).__forceStage;
       const target = typeof forced === "number" ? forced : computeStage();
       stage.current += (target - stage.current) * 0.12;

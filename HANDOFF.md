@@ -4,6 +4,51 @@ Continue in a new chat from here. Project root: `/Users/officemac/ACM/acm-site`.
 Run: `npm run dev` (or the Preview tool config `acm-site`) → http://localhost:3000.
 Build: `npm run build` (green as of this handoff). Typecheck: `npm run typecheck`.
 
+## Iteration 13 — the 8-act storytelling restructure (2026-07-07)
+
+User approved a full homepage redesign brief (plan file: humming-nibbling-tome.md;
+new client decisions SUPERSEDE the June-26 fork-first doctrine: brand audience is
+PRIMARY, careers secondary; a sticky strategy-call bar is approved; social scope
+LinkedIn-only). Home went from 5 sections to an 8-act scroll story; the particle
+engine went from stages 0..4 to 0..7. Subpages untouched.
+
+New page order (page.tsx): Hero → Tension (anchor `noise`, NEW fNoise digital
+static) → ClientPreview (stats row moved out; ProofCTA added) → ProcessTimeline
+(anchor `process`, NEW fThread vertical current; the home page's ONE GSAP pin,
+desktop ≥1024px + no-reduced-motion, mobile = stacked list) → ProofCoverage
+(anchor `coverage`, NEW fLanes four-channel lanes; carries the 3 stat count-ups +
+4 channel tiles + honesty note) → TheFork (anchors `partner`/`careers`, fSplit) →
+LadderTeaser (anchor `talent`, NEW fRise warm climb; rungs step up on desktop,
+75%+ stat as CTA micro-proof) → Culture (anchor `trust`, TeamRail marquee;
+settle/twist finale sits below it, footer dual CTA is the story's ending — do
+NOT add another CTA block) → StickyCall (fixed bar, appears past hero, hides
+near footer, dismissible, careers link hidden on mobile).
+
+Engine changes (GlobalCurrent.tsx): uniforms uAnchorF/G/H (noise/process/
+coverage); formations fNoise/fThread/fLanes/fRise added, fTalentCurrent retired
+in place; morph chain 7 branches; clamp 0..7; edge-fade protected near stages 1
+AND 5; computeStage raw = [0, noise, client, process, coverage, fork(partner+
+careers avg), talent, trust]; `__forceStage` now 0..7. plot-global.mjs mirrors
+all 8 stages (`node scripts/plot-global.mjs` — verified, geometry correct).
+TalentPreview.tsx + TrustBand.tsx retired from the page but kept in-repo.
+
+Copy: new home.tension/process/proof/ladder/culture/sticky blocks in content.ts
+(all reuse/adapt approved strings; zero new stats; no em dashes). Footer "Inc.."
+doubled-period fixed. PRODUCT.md + repo-local DESIGN.md added (impeccable setup).
+Research: /Users/officemac/ACM/research/content-inventory.md (full crawl of both
+live sites + LinkedIn + Meta Ad Library, 2026-07-07). NOTE from the crawl: the
+APEX domain atlanticconnectmarketing.ca already serves this Next build while its
+subpaths (/about, /careers, /partner-with-us) still serve old Squarespace pages —
+launch needs 301s from old slugs.
+
+Verified this pass: typecheck + build green; plot-global geometry for all 8
+stages; structural checks at 1280 + fresh-load 375 (no overflow-x, pin absent on
+mobile, steps opacity 1, sticky bar full-width + 44px CTA + careers link hidden,
+dismiss button 44px). NOT yet verified (needs the user's real browser/GPU, the
+usual constraint): the animated morph through the new stages, pin scrub feel,
+sticky-bar enter/exit timing, legibility plates over live particles at stages
+1/3/4/6.
+
 ## What's done
 
 A full motion-rich Next.js 15 marketing site for Atlantic Connect Marketing
@@ -226,6 +271,24 @@ All 10 new images: Higgsfield soul_2 → webp+blur in media.ts AI-filler block
 OPEN: user pasted the repo URL https://github.com/Novera-Industries/atlantic-connect-marketing.git
 — project is NOT a git repo locally yet; asked whether to init+commit+push (not done
 without explicit go-ahead). Also still open: the hero WAVE shape (needs a reference).
+
+### Iteration 12 — heading descenders no longer clipped (2026-06-29) VERIFIED
+
+User: "the bottom of the letters in the headers" was cut off. Cause: the GSAP
+`mask:"lines"` reveal wraps each heading line in an `overflow: clip` box sized to
+the line-height; Switzer's descenders sit ~0.09em (measured 7.4px @ the hero)
+BELOW that box, so ~1/3 of g/y/p/j got shaved. Fix in `globals.css` (@layer
+utilities): `.reveal-line, :has(> .split-line) { padding-bottom: 0.16em;
+margin-bottom: -0.16em; }` — extends the clip region for descenders, the negative
+margin keeps the heading rhythm identical (descenders overflow into the gap just
+like a non-masked heading). Applies to every SplitReveal/Hero headline at once.
+Verified on the hero (powerful / marketing / happens / person descenders all whole).
+
+GIT: PUSHED (2026-06-29, user authorized). acm-site is now a git repo on `main`,
+remote `origin` = https://github.com/Novera-Industries/atlantic-connect-marketing.git
+(private). Initial commit f03df3d pushed + tracking set. Identity: Novera Industries
+<admin@noveradatasolutions.com>. node_modules/.next gitignored; assets-src/ source
+PNGs (~120MB) ARE tracked (project intent). Future changes: normal commit + push.
 
 ### Phase 1 FIXED + Phase 2 + Phase 3 BUILT (2026-06-29)
 

@@ -192,6 +192,16 @@ html.lenis body {
     overflow: hidden;
     display: block;
   }
+  /* GSAP `mask:"lines"` wrappers (and .reveal-line) clip each line at the line box.
+     With our tight display line-heights the font's descenders (g, y, p, j) sit
+     ~0.09em below that box and get shaved. Extend the clip a little at the bottom,
+     compensated with a matching negative margin so the heading rhythm is unchanged
+     (descenders now overflow into the gap exactly like a non-masked heading). */
+  .reveal-line,
+  :has(> .split-line) {
+    padding-bottom: 0.16em;
+    margin-bottom: -0.16em;
+  }
   .hairline-t {
     border-top: 1px solid var(--line);
   }

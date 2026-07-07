@@ -7,7 +7,15 @@ import { useCallback } from "react";
  * registers its DOM node here, and GlobalCurrent reads the live screen rect each
  * frame to aim a stream at it. Module singleton — there is one home page.
  */
-export type AnchorName = "partner" | "careers" | "client" | "talent" | "trust";
+export type AnchorName =
+  | "partner"
+  | "careers"
+  | "client"
+  | "talent"
+  | "trust"
+  | "noise"
+  | "process"
+  | "coverage";
 
 const registry: Partial<Record<AnchorName, HTMLElement | null>> = {};
 

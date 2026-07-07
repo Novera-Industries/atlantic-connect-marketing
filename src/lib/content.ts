@@ -47,6 +47,43 @@ export const home = {
     heading: "Built on genuine connection, and proof of how we work.",
     body: "We're a young firm with a deliberate way of working. Until the case studies are public, our process is the proof: transparent, trained, and accountable to the brands who trust us with their reputation.",
   },
+  // --- The story acts added in the scroll-narrative redesign ---------------
+  tension: {
+    eyebrow: "The state of attention",
+    headline: ["Every channel", "is shouting."],
+    body: "Feeds scroll past. Ads get skipped, blocked, and forgotten. Digital marketing rents attention, and the rent keeps going up.",
+    punch: "Attention is rented. Connection is earned.",
+  },
+  process: {
+    eyebrow: "How we earn trust",
+    heading: "Our process is the proof.",
+    body: "We're a young firm with a deliberate way of working: transparent, trained, and accountable to the brands who trust us with their reputation.",
+    cta: "See the full process",
+    ctaProof: "Four steps. One named point of contact.",
+  },
+  proof: {
+    eyebrow: "Where we work",
+    heading: "Atlantic Canada, in person.",
+    body: "Field teams deployed across Atlantic-Canada territories, matched to the channel that fits your customer.",
+    cta: "Explore coverage",
+    note: "Real numbers only. As campaigns complete and clients approve, verified results join these.",
+  },
+  ladder: {
+    eyebrow: "For talent",
+    heading: "Start in the field. Learn to lead. Run the campaign.",
+    body: "We hire for energy and integrity, then teach the rest. The ladder is real, and it's climbed on merit, not tenure.",
+    cta: "Explore careers",
+  },
+  culture: {
+    eyebrow: "The team",
+    heading: "The culture is the strategy.",
+    body: "From the morning huddle to the evening win. This is what the work actually feels like.",
+  },
+  sticky: {
+    label: "Book a 20-min strategy call",
+    proof: "We reply within one business day.",
+    careers: "Careers",
+  },
 };
 
 export const partner = {

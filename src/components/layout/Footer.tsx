@@ -104,7 +104,8 @@ export function Footer() {
       <div className="border-t border-line">
         <Container size="shell" className="flex flex-col items-center justify-between gap-3 py-6 text-xs text-subtle sm:flex-row">
           <p>
-            © {year} {site.name}. All rights reserved.
+            {/* site.name already ends in "Inc." — no extra period */}
+            © {year} {site.name} All rights reserved.
           </p>
           <div className="flex items-center gap-5">
             <Link href="/privacy" className="hover:text-muted">Privacy (PIPEDA)</Link>
